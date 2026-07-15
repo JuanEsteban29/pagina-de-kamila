@@ -1,0 +1,191 @@
+[
+    {
+        "id": 1,
+        "title": "Pinza para planchado",
+        "price": 0.80,
+        "category": "accesorios",
+        "img": "assets/images/pinza-planchado.jpeg",
+        "stock": 13,
+        "tones": ""
+    },
+    {
+        "id": 2,
+        "title": "Guantes exfoliante",
+        "price": 2.50,
+        "category": "accesorios",
+        "img": "assets/images/guantes.jpeg",
+        "stock": 1,
+        "tones": ""
+    },
+    {
+        "id": 3,
+        "title": "Blush Dolce Bella con brillo",
+        "price": 4.56,
+        "category": "rostro",
+        "img": "assets/images/blush brillo.jpeg",
+        "stock": 3,
+        "tones": ""
+    },
+    {
+        "id": 4,
+        "title": "Bases matte",
+        "price": 10.15,
+        "category": "rostro",
+        "img": "assets/images/base matte.jpeg",
+        "stock": 5,
+        "tones": "1 Carmel, 1 Vainilla, 1 Tam, 1 Nutmeg, 1 Golden"
+    },
+    {
+        "id": 5,
+        "title": "Máscaras de pestaña Dolce Bella Moradas",
+        "price": 4.56,
+        "category": "ojos",
+        "img": "assets/images/mascara.jpeg",
+        "stock": 4,
+        "tones": ""
+    },
+    {
+        "id": 6,
+        "title": "Máscara definición Dolce Bella Amarilla",
+        "price": 4.56,
+        "category": "ojos",
+        "img": "assets/images/mascara-amarilla.jpeg",
+        "stock": 1,
+        "tones": ""
+    },
+    {
+        "id": 7,
+        "title": "Gel de cejas Salome",
+        "price": 5.80,
+        "category": "ojos",
+        "img": "assets/images/GEL DE CEJA.jpeg",
+        "stock": 2,
+        "tones": ""
+    },
+    {
+        "id": 8,
+        "title": "Gorros de satín",
+        "price": 7.00,
+        "category": "accesorios",
+        "img": "assets/images/gorros.jpeg",
+        "stock": 3,
+        "tones": ""
+    },
+    {
+        "id": 9,
+        "title": "Polvo compacto Dolce Bella",
+        "price": 5.60,
+        "category": "rostro",
+        "img": "assets/images/polvo.jpeg",
+        "stock": 1,
+        "tones": "N°10"
+    },
+    {
+        "id": 10,
+        "title": "Vinyl Lasting Dolce Bella",
+        "price": 5.60,
+        "category": "labios",
+        "img": "assets/images/vinyl.jpeg",
+        "stock": 2,
+        "tones": ""
+    },
+    {
+        "id": 11,
+        "title": "Juicy Flush Tinted Lip & Cheek",
+        "price": 5.80,
+        "category": "labios",
+        "img": "assets/images/tinta.jpeg",
+        "stock": 4,
+        "tones": "2 Poppy, 1 Lily, 1 Iris"
+    },
+    {
+        "id": 12,
+        "title": "Lipgloss Juicy Bomb",
+        "price": 3.00,
+        "category": "labios",
+        "img": "assets/images/brillo.jpeg",
+        "stock": 3,
+        "tones": ""
+    },
+    {
+        "id": 13,
+        "title": "Lápices para cejas negros",
+        "price": 2.00,
+        "category": "ojos",
+        "img": "assets/images/lapiz-negro.jpeg",
+        "stock": 3,
+        "tones": ""
+    },
+    {
+        "id": 14,
+        "title": "Lápices para cejas marrones",
+        "price": 2.00,
+        "category": "ojos",
+        "img": "assets/images/lapiz-marron.jpeg",
+        "stock": 2,
+        "tones": ""
+    },
+    {
+        "id": 15,
+        "title": "Polvo translúcido finishing powder",
+        "price": 5.60,
+        "category": "rostro",
+        "img": "assets/images/POLVO TRANSLUCIDO.jpeg",
+        "stock": 1,
+        "tones": ""
+    },
+    {
+        "id": 16,
+        "title": "Correctores",
+        "price": 5.20,
+        "category": "rostro",
+        "img": "assets/images/corrector.jpeg",
+        "stock": 8,
+        "tones": "1 Brown, 2 Honey, 2 Ivory, 2 Carmel, 1 Beige"
+    },
+    {
+        "id": 17,
+        "title": "Blush sencillos",
+        "price": 4.00,
+        "category": "rostro",
+        "img": "assets/images/BLUSH SENCILLOS.jpeg",
+        "stock": 3,
+        "tones": "Tono 07, 04, 11"
+    },
+    {
+        "id": 18,
+        "title": "Bases de borlas",
+        "price": 4.00,
+        "category": "accesorios",
+        "img": "assets/images/borlas.jpeg",
+        "stock": 2,
+        "tones": ""
+    },
+    {
+        "id": 19,
+        "title": "Esponja de maquillaje",
+        "price": 1.50,
+        "category": "accesorios",
+        "img": "assets/images/esponja.jpeg",
+        "stock": 1,
+        "tones": ""
+    },
+    {
+        "id": 20,
+        "title": "Pinza Hawaiana",
+        "price": 3.50,
+        "category": "accesorios",
+        "img": "assets/images/pinza-hawaiana.jpeg",
+        "stock": 1,
+        "tones": ""
+    },
+    {
+        "id": 21,
+        "title": "Lip Gloss Dolce Bella",
+        "price": 4.00,
+        "category": "labios",
+        "img": "assets/images/LIP GLOSS.jpeg",
+        "stock": 13,
+        "tones": "C02, D3, D4, D6, D5, 06, 04, D1, 01, 03"
+    }
+]

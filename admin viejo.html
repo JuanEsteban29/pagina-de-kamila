@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KARA Makeup - Panel de Administración</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Playfair+Display:ital,wght=0,400;0,700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #E22963;
+            --secondary: #E4484B;
+            --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
+            --bg-main: #FAFAFA;
+            --bg-surface: #FFFFFF;
+            --text-main: #1C1C1C;
+            --text-muted: #666666;
+            --border-color: #EAEAEA;
+            --shadow-color: rgba(226, 41, 99, 0.1);
+            --success: #25D366;
+            --danger: #FF3B30;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        /* Pantalla de Contraseña */
+        #loginScreen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #FFF2F5 0%, #FFF9F2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 1.5rem;
+        }
+
+        .login-card {
+            background: var(--bg-surface);
+            padding: 3rem 2.5rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(226, 41, 99, 0.08);
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            border: 1px solid rgba(226, 41, 99, 0.1);
+        }
+
+        .login-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+
+        .login-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 0.85rem 1.2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            border-color: var(--primary);
+            background-color: var(--bg-surface);
+            box-shadow: 0 0 0 4px rgba(226, 41, 99, 0.05);
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 0.9rem;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+            border: none;
+            box-shadow: 0 8px 20px var(--shadow-color);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(226, 41, 99, 0.25);
+        }
+
+        .login-error {
+            color: var(--danger);
+            font-size: 0.82rem;
+            margin-top: 1rem;
+            display: none;
+            font-weight: 600;
+        }
+
+        /* Contenido del Panel */
+        .admin-header {
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1.2rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .logo-text span {
+            color: var(--primary);
+        }
+
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .header-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.88rem;
+            transition: color 0.3s ease;
+        }
+
+        .header-link:hover {
+            color: var(--primary);
+        }
+
+        .btn-logout {
+            background: none;
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1.2rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-logout:hover {
+            background: var(--bg-main);
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+            display: grid;
+            grid-template-columns: 1.2fr 1.8fr;
+            gap: 3rem;
+        }
+
+        @media (max-width: 992px) {
+            .admin-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Panel Izquierdo: Formulario */
+        .card {
+            background: var(--bg-surface);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            padding: 2.2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+            position: relative;
+        }
+
+        .card-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Área de carga de imagen */
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            padding: 2rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            background-color: var(--bg-main);
+            overflow: hidden;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary);
+            background-color: rgba(226, 41, 99, 0.02);
+        }
+
+        .upload-icon {
+            font-size: 2.2rem;
+            margin-bottom: 0.8rem;
+            display: block;
+        }
+
+        .upload-text {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .upload-text span {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+        .upload-preview-container {
+            position: absolute;
+            inset: 0;
+            background: white;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-preview {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .remove-preview-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+
+        /* Escaneo IA y Animación de Línea */
+        .scan-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(226, 41, 99, 0.1);
+            display: none;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(to right, transparent, var(--primary), var(--secondary), transparent);
+            box-shadow: 0 0 12px var(--primary);
+            opacity: 0.85;
+        }
+
+        .ai-badge {
+            background-color: #FFF2F5;
+            color: var(--primary);
+            border: 1px solid rgba(226, 41, 99, 0.2);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 1.5rem;
+        }
+
+        .ai-status-msg {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-top: 0.5rem;
+            text-align: center;
+            min-height: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .form-grid .input-group:last-child {
+            grid-column: span 2;
+        }
+
+        /* Panel Derecho: Lista de Catálogo */
+        .catalog-manager {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .search-catalog-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 0.5rem;
+        }
+
+        .catalog-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 70vh;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .catalog-item {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .catalog-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.02);
+            border-color: rgba(226, 41, 99, 0.15);
+        }
+
+        .item-thumb {
+            width: 64px;
+            height: 64px;
+            border-radius: 10px;
+            object-fit: cover;
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .item-details {
+            flex-grow: 1;
+        }
+
+        .item-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+            color: var(--text-main);
+        }
+
+        .item-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .item-meta span strong {
+            color: var(--text-main);
+        }
+
+        .item-price {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .btn-delete {
+            background: #fff0f0;
+            border: 1.5px solid #f8c3c3;
+            color: #d32f2f;
+            cursor: pointer;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .btn-delete:hover {
+            background-color: #d32f2f;
+            color: #fff;
+            border-color: #d32f2f;
+            transform: scale(1.04);
+            box-shadow: 0 4px 14px rgba(211,47,47,0.25);
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1C1C1C;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.88rem;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .notification.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .sync-notice {
+            background-color: #FFF9F2;
+            border: 1px solid rgba(243, 169, 83, 0.2);
+            border-radius: 14px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: #8A5B20;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .sync-notice svg {
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .btn-export {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-export:hover {
+            background-color: #FFF2F5;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Pantalla de Login -->
+    <div id="loginScreen">
+        <div class="login-card">
+            <h1 class="login-logo">KARA</h1>
+            <p class="login-subtitle">Acceso de Administradora</p>
+            <form id="loginForm">
+                <div class="input-group">
+                    <label for="adminPass">Contraseña de Acceso</label>
+                    <input type="password" id="adminPass" class="input-field" placeholder="Ingresa la contraseña..." required autofocus>
+                </div>
+                <button type="submit" class="btn-action btn-primary">Entrar al Panel</button>
+                <p class="login-error" id="loginError">Contraseña incorrecta. Inténtalo de nuevo.</p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Header Panel -->
+    <header class="admin-header">
+        <div class="header-container">
+            <div class="logo-text">KARA <span>Admin</span></div>
+            <nav class="header-nav">
+                <a href="index.html" class="header-link">← Ir a la Tienda</a>
+                <button class="btn-logout" id="btnLogout">Cerrar Sesión</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="admin-container">
+        
+        <!-- Columna Izquierda: Formulario e IA -->
+        <section class="card">
+            <h2 class="card-title">✨ Añadir Producto</h2>
+            
+            <div class="ai-badge">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+                Asistente de Catalogación IA Activo
+            </div>
+
+            <!-- Upload Area -->
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-preview-container" id="previewContainer">
+                    <img src="" alt="Vista previa" class="upload-preview" id="imagePreview">
+                    <button type="button" class="remove-preview-btn" id="btnRemovePreview" aria-label="Remover imagen">&times;</button>
+                </div>
+                <div class="scan-overlay" id="scanOverlay">
+                    <div class="scan-line" id="scanLine"></div>
+                </div>
+                <span class="upload-icon">📸</span>
+                <p class="upload-text" id="uploadPrompt">Arrastra la foto aquí o <span>haz clic para buscar</span></p>
+                <input type="file" id="prodImageFile" accept="image/*" style="display: none;">
+            </div>
+            
+            <p class="ai-status-msg" id="aiStatusMsg"></p>
+
+            <form id="productForm">
+                <div class="input-group">
+                    <label for="prodTitle">Nombre del Producto</label>
+                    <input type="text" id="prodTitle" class="input-field" placeholder="Ej. Bases matte" required>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label for="prodPrice">Precio ($ USD)</label>
+                        <input type="number" id="prodPrice" class="input-field" placeholder="0.00" step="0.01" min="0" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="prodCategory">Categoría</label>
+                        <select id="prodCategory" class="input-field" style="height: 48px;" required>
+                            <option value="">Selecciona...</option>
+                            <option value="labios">Labios</option>
+                            <option value="rostro">Rostro</option>
+                            <option value="ojos">Ojos</option>
+                            <option value="accesorios">Accesorios</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="prodTones">Tonos / Variantes (Opcional)</label>
+                        <input type="text" id="prodTones" class="input-field" placeholder="Ej. 1 Carmel, 1 Vainilla">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="prodStock">Stock Inicial</label>
+                        <input type="number" id="prodStock" class="input-field" value="1" min="1">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn-action btn-primary" style="margin-top: 1rem;">Guardar Producto</button>
+            </form>
+        </section>
+
+        <!-- Columna Derecha: Catálogo Existente -->
+        <section class="catalog-manager">
+            <div class="sync-notice" id="syncStatusNotice">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <div style="flex-grow:1;">
+                    <span id="syncModeText">Conexión local: detectando entorno...</span><br>
+                    <span id="syncDescText">Los cambios se guardan localmente para probar la web.</span>
+                </div>
+            </div>
+
+            <div class="search-catalog-bar">
+                <input type="text" id="searchCatalogInput" class="input-field" placeholder="Buscar en el catálogo de Kamila..." style="padding: 0.65rem 1.2rem;">
+                <button class="btn-action btn-export" id="btnExportJSON" style="width: auto; padding: 0.65rem 1.5rem; display: none;">
+                    Exportar JSON
+                </button>
+            </div>
+
+            <div class="catalog-list" id="catalogList">
+                <!-- Se poblará dinámicamente -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Notificación emergente -->
+    <div class="notification" id="notificationToast">
+        <span id="notificationIcon">✓</span>
+        <span id="notificationText">Operación realizada con éxito</span>
+    </div>
+
+    <!-- GSAP de Animación Core -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <!-- Carga de TensorFlow.js + MobileNet -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0/dist/mobilenet.min.js" defer></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>

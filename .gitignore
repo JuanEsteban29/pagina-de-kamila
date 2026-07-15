@@ -1,0 +1,6 @@
+node_modules/
+.kiro/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log

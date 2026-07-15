@@ -1,0 +1,696 @@
+/**
+ * KARA Makeup — Back-Office & AI Image Cataloging Logic
+ * =======================================================
+ */
+
+// Contraseña sencilla para el panel de Kamila
+const CONTRASEÑA_CORRECTA = "KARA2026";
+
+// Estado global del catálogo en administración
+let catalogoCompleto = [];
+let localAddedProducts = JSON.parse(localStorage.getItem('KARA_ADMIN_ADDED')) || [];
+let localDeletedIds = JSON.parse(localStorage.getItem('KARA_ADMIN_DELETED')) || [];
+let serverSyncActive = false;
+let tfModel = null;
+let currentUploadedImageBase64 = "";
+
+document.addEventListener("DOMContentLoaded", () => {
+    initAdmin();
+});
+
+function initAdmin() {
+    setupPassGate();
+    setupImageUpload();
+    setupProductForm();
+    setupSyncMode();
+    loadAIModel();
+    loadCatalog();
+}
+
+// ==========================================
+// 1. CONTROL DE ACCESO (PASS GATE)
+// ==========================================
+function setupPassGate() {
+    const loginForm = document.getElementById("loginForm");
+    const loginScreen = document.getElementById("loginScreen");
+    const adminPass = document.getElementById("adminPass");
+    const loginError = document.getElementById("loginError");
+    const btnLogout = document.getElementById("btnLogout");
+
+    // Verificar si ya inició sesión en esta sesión del navegador
+    if (sessionStorage.getItem("KARA_ADMIN_LOGGED") === "true") {
+        loginScreen.style.display = "none";
+    }
+
+    loginForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        if (adminPass.value === CONTRASEÑA_CORRECTA) {
+            sessionStorage.setItem("KARA_ADMIN_LOGGED", "true");
+            gsap.to(loginScreen, {
+                opacity: 0,
+                scale: 0.95,
+                duration: 0.5,
+                onComplete: () => loginScreen.style.display = "none"
+            });
+        } else {
+            loginError.style.display = "block";
+            gsap.fromTo(loginScreen.querySelector(".login-card"), 
+                { x: -10 }, { x: 10, duration: 0.1, repeat: 5, yoyo: true, onComplete: () => {
+                    loginScreen.querySelector(".login-card").style.transform = "none";
+                }}
+            );
+        }
+    });
+
+    if (btnLogout) {
+        btnLogout.addEventListener("click", () => {
+            sessionStorage.removeItem("KARA_ADMIN_LOGGED");
+            location.reload();
+        });
+    }
+}
+
+// ==========================================
+// 2. MODO DE SINCRONIZACIÓN (SERVIDOR VS ESTÁTICO)
+// ==========================================
+async function setupSyncMode() {
+    const modeText = document.getElementById("syncModeText");
+    const descText = document.getElementById("syncDescText");
+    const exportBtn = document.getElementById("btnExportJSON");
+
+    try {
+        // Hacemos una petición rápida para ver si el servidor responde
+        const res = await fetch("/api/productos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify([]) // cuerpo vacío de prueba
+        });
+        if (res.ok) {
+            serverSyncActive = true;
+            modeText.textContent = "Conexión local: SERVIDOR ACTIVO 🚀";
+            modeText.parentElement.style.backgroundColor = "#F2FFF5";
+            modeText.parentElement.style.borderColor = "rgba(37, 211, 102, 0.2)";
+            modeText.parentElement.style.color = "#1E6B34";
+            descText.textContent = "Los cambios se guardan automáticamente en js/productos.json en tiempo real.";
+            exportBtn.style.display = "none";
+        } else {
+            throw new Error("No server endpoint");
+        }
+    } catch (e) {
+        serverSyncActive = false;
+        modeText.textContent = "Conexión local: MODO HOSTING ESTÁTICO 🥥";
+        descText.textContent = "Los cambios se guardan localmente. Presiona 'Exportar JSON' y guárdalo en tu carpeta js/ para que sea permanente.";
+        exportBtn.style.display = "inline-flex";
+    }
+
+    if (exportBtn) {
+        exportBtn.addEventListener("click", exportarJsonCompleto);
+    }
+}
+
+// ==========================================
+// 3. CARGA DE MODELO IA TENSORFLOW.JS (MOBILENET)
+// ==========================================
+function loadAIModel() {
+    const aiStatusMsg = document.getElementById("aiStatusMsg");
+    showAIStatus("Inicializando Inteligencia Artificial...", "loading");
+
+    // Esperar a que se carguen los scripts defer de TensorFlow.js
+    const checkInterval = setInterval(() => {
+        if (window.tf && window.mobilenet) {
+            clearInterval(checkInterval);
+            mobilenet.load().then(model => {
+                tfModel = model;
+                showAIStatus("Inteligencia Artificial lista para escanear.", "success");
+            }).catch(err => {
+                console.error("Error al cargar MobileNet:", err);
+                showAIStatus("IA inactiva (falló la descarga del modelo).", "error");
+            });
+        }
+    }, 500);
+}
+
+function showAIStatus(msg, type = "info") {
+    const statusMsg = document.getElementById("aiStatusMsg");
+    if (!statusMsg) return;
+    statusMsg.textContent = msg;
+    if (type === "success") {
+        statusMsg.style.color = "var(--success)";
+    } else if (type === "error") {
+        statusMsg.style.color = "var(--danger)";
+    } else if (type === "loading") {
+        statusMsg.style.color = "var(--primary)";
+    } else {
+        statusMsg.style.color = "var(--text-muted)";
+    }
+}
+
+// ==========================================
+// 4. CARGA DE IMÁGENES Y ANÁLISIS IA
+// ==========================================
+function setupImageUpload() {
+    const uploadArea = document.getElementById("uploadArea");
+    const fileInput = document.getElementById("prodImageFile");
+    const previewContainer = document.getElementById("previewContainer");
+    const imagePreview = document.getElementById("imagePreview");
+    const btnRemove = document.getElementById("btnRemovePreview");
+    const uploadPrompt = document.getElementById("uploadPrompt");
+    const scanOverlay = document.getElementById("scanOverlay");
+    const scanLine = document.getElementById("scanLine");
+
+    uploadArea.addEventListener("click", () => {
+        if (previewContainer.style.display !== "flex") {
+            fileInput.click();
+        }
+    });
+
+    uploadArea.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        uploadArea.classList.add("dragover");
+    });
+
+    uploadArea.addEventListener("dragleave", () => {
+        uploadArea.classList.remove("dragover");
+    });
+
+    uploadArea.addEventListener("drop", (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove("dragover");
+        if (e.dataTransfer.files.length > 0) {
+            procesarImagen(e.dataTransfer.files[0]);
+        }
+    });
+
+    fileInput.addEventListener("change", (e) => {
+        if (e.target.files.length > 0) {
+            procesarImagen(e.target.files[0]);
+        }
+    });
+
+    btnRemove.addEventListener("click", (e) => {
+        e.stopPropagation();
+        fileInput.value = "";
+        previewContainer.style.display = "none";
+        imagePreview.src = "";
+        currentUploadedImageBase64 = "";
+        uploadPrompt.style.display = "block";
+        document.getElementById("productForm").reset();
+        showAIStatus("Imagen removida.", "info");
+    });
+
+    function procesarImagen(file) {
+        if (!file.type.startsWith("image/")) {
+            alert("Por favor, sube una imagen válida.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            currentUploadedImageBase64 = e.target.result;
+            imagePreview.src = currentUploadedImageBase64;
+            previewContainer.style.display = "flex";
+            uploadPrompt.style.display = "none";
+
+            // Lanzar animación de escaneo e IA
+            ejecutarAnalisisIA(file.name);
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+// ==========================================
+// 5. ESCANEO Y CLASIFICACIÓN CON INTELIGENCIA ARTIFICIAL
+// ==========================================
+let scanTimeline = null;
+
+function ejecutarAnalisisIA(filename) {
+    const scanOverlay = document.getElementById("scanOverlay");
+    const scanLine = document.getElementById("scanLine");
+    const imgEl = document.getElementById("imagePreview");
+
+    // Iniciar animación de escaneo láser (GSAP)
+    scanOverlay.style.display = "block";
+    if (scanTimeline) scanTimeline.kill();
+    scanTimeline = gsap.timeline({ repeat: -1 });
+    scanTimeline.fromTo(scanLine, { top: "0%" }, { top: "100%", duration: 1.2, ease: "power1.inOut" })
+                .to(scanLine, { top: "0%", duration: 1.2, ease: "power1.inOut" });
+
+    showAIStatus("Escaneando e identificando el producto con IA...", "loading");
+
+    // 1. Aplicamos heurística basada en el nombre del archivo primero (muy rápida y precisa para nombres conocidos)
+    const heuristica = analizarHeuristicaFilename(filename);
+
+    // 2. Ejecutar clasificación TensorFlow.js en paralelo (con delay sutil para mejorar la sensación de escaneo/UX)
+    setTimeout(async () => {
+        let clasificacionIA = null;
+        if (tfModel && imgEl) {
+            try {
+                const predictions = await tfModel.classify(imgEl);
+                console.log("Predicciones de TensorFlow.js:", predictions);
+                clasificacionIA = procesarPrediccionesIA(predictions);
+            } catch (err) {
+                console.error("Error clasificando con TensorFlow:", err);
+            }
+        }
+
+        // Combinamos la heurística y la clasificación por modelo
+        const resultadoFinal = clasificacionIA || heuristica || { category: "", title: "", confidence: 0 };
+
+        // Detener animación de escaneo
+        gsap.to(scanOverlay, {
+            opacity: 0,
+            duration: 0.3,
+            onComplete: () => {
+                scanOverlay.style.display = "none";
+                scanOverlay.style.opacity = 1;
+                if (scanTimeline) scanTimeline.kill();
+            }
+        });
+
+        // Rellenar formulario automáticamente si se detectó algo
+        if (resultadoFinal.category) {
+            document.getElementById("prodCategory").value = resultadoFinal.category;
+            document.getElementById("prodTitle").value = resultadoFinal.title;
+            
+            showAIStatus(`¡Producto detectado! Es un(a) "${resultadoFinal.title}" en la categoría "${resultadoFinal.category.toUpperCase()}"`, "success");
+            
+            // Animación de feedback para indicar que se llenaron los campos
+            gsap.fromTo("#prodTitle, #prodCategory", 
+                { backgroundColor: "rgba(37, 211, 102, 0.1)" }, 
+                { backgroundColor: "var(--bg-main)", duration: 1.2 }
+            );
+        } else {
+            showAIStatus("No se pudo identificar automáticamente. Por favor ingresa los datos a mano.", "info");
+        }
+    }, 1800);
+}
+
+// Analizador heurístico rápido de nombres de archivo
+function analizarHeuristicaFilename(filename) {
+    const fn = filename.toLowerCase();
+    
+    if (fn.includes("labial") || fn.includes("brillo") || fn.includes("gloss") || fn.includes("lip") || fn.includes("tinta") || fn.includes("vinyl") || fn.includes("rouge")) {
+        return { category: "labios", title: "Lip Gloss / Labial Premium" };
+    }
+    if (fn.includes("base") || fn.includes("polvo") || fn.includes("compacto") || fn.includes("corrector") || fn.includes("suede") || fn.includes("matte")) {
+        return { category: "rostro", title: "Base de Maquillaje Matte" };
+    }
+    if (fn.includes("blush") || fn.includes("rubor") || fn.includes("velvet") || fn.includes("iluminador")) {
+        return { category: "rostro", title: "Blush Compacto" };
+    }
+    if (fn.includes("ceja") || fn.includes("pestaña") || fn.includes("mascara") || fn.includes("delineador") || fn.includes("lapiz") || fn.includes("ojo") || fn.includes("gel")) {
+        // Diferenciar si es delineador o máscara
+        if (fn.includes("lapiz") || fn.includes("pencil")) {
+            return { category: "ojos", title: "Lápiz para Cejas / Ojos" };
+        }
+        if (fn.includes("gel")) {
+            return { category: "ojos", title: "Gel de Cejas" };
+        }
+        return { category: "ojos", title: "Máscara de Pestañas" };
+    }
+    if (fn.includes("pinza") || fn.includes("guante") || fn.includes("gorro") || fn.includes("borla") || fn.includes("esponja") || fn.includes("brocha") || fn.includes("accesorio")) {
+        if (fn.includes("guante") || fn.includes("glove")) {
+            return { category: "accesorios", title: "Guantes Exfoliantes" };
+        }
+        if (fn.includes("pinza")) {
+            return { category: "accesorios", title: "Pinza de Cabello" };
+        }
+        if (fn.includes("brocha") || fn.includes("brush")) {
+            return { category: "accesorios", title: "Kit de Brochas Profesionales" };
+        }
+        if (fn.includes("esponja") || fn.includes("sponge")) {
+            return { category: "accesorios", title: "Esponja de Maquillaje" };
+        }
+        return { category: "accesorios", title: "Accesorio de Belleza" };
+    }
+    return null;
+}
+
+// Procesamiento de las etiquetas de MobileNet
+function procesarPrediccionesIA(predictions) {
+    // Tomamos la primera predicción con mayor confianza
+    const top = predictions[0];
+    if (!top || top.probability < 0.1) return null;
+
+    const className = top.className.toLowerCase();
+    
+    // Lipstick
+    if (className.includes("lipstick") || className.includes("lip rouge") || className.includes("makeup") && className.includes("lip")) {
+        return { category: "labios", title: "Lip Gloss / Labial Premium" };
+    }
+    // Hairpin / Hair slide / Accessories
+    if (className.includes("hair slide") || className.includes("hairpin") || className.includes("pin") || className.includes("barrette")) {
+        return { category: "accesorios", title: "Pinza Premium" };
+    }
+    // Glove / Mittens
+    if (className.includes("glove") || className.includes("mitten") || className.includes("hand wear")) {
+        return { category: "accesorios", title: "Guantes Exfoliantes" };
+    }
+    // Brush
+    if (className.includes("brush") || className.includes("paint brush") || className.includes("toothbrush")) {
+        return { category: "accesorios", title: "Kit de Brochas Profesionales" };
+    }
+    // Sponge
+    if (className.includes("sponge")) {
+        return { category: "accesorios", title: "Esponja de Maquillaje" };
+    }
+    // Lotion / Face powder / Perfume / Cosmetic container
+    if (className.includes("powder") || className.includes("lotion") || className.includes("sunscreen") || className.includes("cream") || className.includes("perfume") || className.includes("cosmetic")) {
+        if (className.includes("powder")) {
+            return { category: "rostro", title: "Polvo Compacto Premium" };
+        }
+        return { category: "rostro", title: "Base de Maquillaje Matte" };
+    }
+    // Mascara / Eyeliner (Sometimes predicted as office supplies, writing utensils or makeup)
+    if (className.includes("mascara") || className.includes("pencil") || className.includes("fountain pen") || className.includes("ballpoint")) {
+        return { category: "ojos", title: "Lápiz / Máscara de Ojos" };
+    }
+
+    return null;
+}
+
+// ==========================================
+// 6. CARGA Y GESTIÓN DEL CATÁLOGO
+// ==========================================
+async function loadCatalog() {
+    const listContainer = document.getElementById("catalogList");
+    if (!listContainer) return;
+
+    listContainer.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);">Cargando catálogo...</div>`;
+
+    // Catálogo base hardcodeado (fallback para modo file:// sin servidor)
+    const dbFallback = [
+        { id: 1,  title: "Pinza para planchado",                  price: 0.80,  category: "accesorios", img: "assets/images/pinza-planchado.jpeg",   stock: 13, tones: "" },
+        { id: 2,  title: "Guantes exfoliante",                    price: 2.50,  category: "accesorios", img: "assets/images/guantes.jpeg",            stock: 1,  tones: "" },
+        { id: 3,  title: "Blush Dolce Bella con brillo",          price: 4.56,  category: "rostro",     img: "assets/images/blush brillo.jpeg",       stock: 3,  tones: "" },
+        { id: 4,  title: "Bases matte",                           price: 10.15, category: "rostro",     img: "assets/images/base matte.jpeg",         stock: 5,  tones: "1 Carmel, 1 Vainilla, 1 Tam, 1 Nutmeg, 1 Golden" },
+        { id: 5,  title: "Máscaras de pestaña Dolce Bella Moradas",price: 4.56, category: "ojos",       img: "assets/images/mascara.jpeg",            stock: 4,  tones: "" },
+        { id: 6,  title: "Máscara definición Dolce Bella Amarilla",price: 4.56, category: "ojos",       img: "assets/images/mascara-amarilla.jpeg",   stock: 1,  tones: "" },
+        { id: 7,  title: "Gel de cejas Salome",                   price: 5.80,  category: "ojos",       img: "assets/images/GEL DE CEJA.jpeg",        stock: 2,  tones: "" },
+        { id: 8,  title: "Gorros de satín",                       price: 7.00,  category: "accesorios", img: "assets/images/gorros.jpeg",             stock: 3,  tones: "" },
+        { id: 9,  title: "Polvo compacto Dolce Bella",            price: 5.60,  category: "rostro",     img: "assets/images/polvo.jpeg",              stock: 1,  tones: "N°10" },
+        { id: 10, title: "Vinyl Lasting Dolce Bella",             price: 5.60,  category: "labios",     img: "assets/images/vinyl.jpeg",              stock: 2,  tones: "" },
+        { id: 11, title: "Juicy Flush Tinted Lip & Cheek",        price: 5.80,  category: "labios",     img: "assets/images/tinta.jpeg",              stock: 4,  tones: "2 Poppy, 1 Lily, 1 Iris" },
+        { id: 12, title: "Lipgloss Juicy Bomb",                   price: 3.00,  category: "labios",     img: "assets/images/brillo.jpeg",             stock: 3,  tones: "" },
+        { id: 13, title: "Lápices para cejas negros",             price: 2.00,  category: "ojos",       img: "assets/images/lapiz-negro.jpeg",        stock: 3,  tones: "" },
+        { id: 14, title: "Lápices para cejas marrones",           price: 2.00,  category: "ojos",       img: "assets/images/lapiz-marron.jpeg",       stock: 2,  tones: "" },
+        { id: 15, title: "Polvo translúcido finishing powder",    price: 5.60,  category: "rostro",     img: "assets/images/POLVO TRANSLUCIDO.jpeg",  stock: 1,  tones: "" },
+        { id: 16, title: "Correctores",                           price: 5.20,  category: "rostro",     img: "assets/images/corrector.jpeg",          stock: 8,  tones: "1 Brown, 2 Honey, 2 Ivory, 2 Carmel, 1 Beige" },
+        { id: 17, title: "Blush sencillos",                       price: 4.00,  category: "rostro",     img: "assets/images/BLUSH SENCILLOS.jpeg",    stock: 3,  tones: "Tono 07, 04, 11" },
+        { id: 18, title: "Bases de borlas",                       price: 4.00,  category: "accesorios", img: "assets/images/borlas.jpeg",             stock: 2,  tones: "" },
+        { id: 19, title: "Esponja de maquillaje",                 price: 1.50,  category: "accesorios", img: "assets/images/esponja.jpeg",            stock: 1,  tones: "" },
+        { id: 20, title: "Pinza Hawaiana",                        price: 3.50,  category: "accesorios", img: "assets/images/pinza-hawaiana.jpeg",     stock: 1,  tones: "" },
+        { id: 21, title: "Lip Gloss Dolce Bella",                 price: 4.00,  category: "labios",     img: "assets/images/LIP GLOSS.jpeg",          stock: 13, tones: "C02, D3, D4, D6, D5, 06, 04, D1, 01, 03" }
+    ];
+
+    let dbOrig = [];
+
+    // Intentar leer de productos.json — si falla (modo file://) usar fallback directamente
+    try {
+        const res = await fetch("js/productos.json");
+        if (res.ok) {
+            dbOrig = await res.json();
+        } else {
+            dbOrig = dbFallback;
+        }
+    } catch (e) {
+        // CORS en file:// — usar fallback sin mostrar error al usuario
+        console.info("[KARA Admin] Sin servidor detectado. Usando catálogo base local.");
+        dbOrig = dbFallback;
+    }
+
+    // Combinar con localStorage (modo estático) o usar el JSON del servidor
+    if (!serverSyncActive) {
+        catalogoCompleto = dbOrig.filter(p => !localDeletedIds.includes(p.id));
+        catalogoCompleto = [...catalogoCompleto, ...localAddedProducts];
+    } else {
+        catalogoCompleto = dbOrig;
+    }
+
+    renderCatalogList();
+}
+
+
+function renderCatalogList(filtrados = null) {
+    const listContainer = document.getElementById("catalogList");
+    const searchCatalogInput = document.getElementById("searchCatalogInput");
+    if (!listContainer) return;
+
+    listContainer.innerHTML = "";
+
+    const items = filtrados || catalogoCompleto;
+
+    if (items.length === 0) {
+        listContainer.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);">No se encontraron productos.</div>`;
+        return;
+    }
+
+    // Ordenar por ID descendente para ver los últimos agregados primero
+    const ordenados = [...items].sort((a, b) => b.id - a.id);
+
+    ordenados.forEach(prod => {
+        const itemDiv = document.createElement("div");
+        itemDiv.className = "catalog-item";
+        itemDiv.innerHTML = `
+            <img src="${prod.img}" alt="${prod.title}" class="item-thumb" onerror="this.src='https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=100'">
+            <div class="item-details">
+                <h4 class="item-title">${prod.title}</h4>
+                <div class="item-meta">
+                    <span>Categoría: <strong>${prod.category.toUpperCase()}</strong></span>
+                    <span>Stock: <strong>${prod.stock || 1}</strong></span>
+                    ${prod.tones ? `<span>Tonos: <strong>${prod.tones}</strong></span>` : ''}
+                </div>
+            </div>
+            <div class="item-price">$${prod.price.toFixed(2)}</div>
+            <button class="btn-delete" data-id="${prod.id}" title="Eliminar producto">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                Borrar
+            </button>
+        `;
+
+        listContainer.appendChild(itemDiv);
+    });
+
+    // Eventos de eliminar
+    listContainer.querySelectorAll(".btn-delete").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const id = parseInt(btn.dataset.id);
+            const nombreProd = btn.closest(".catalog-item")?.querySelector(".item-title")?.textContent || "este producto";
+            if (confirm(`¿Eliminar "${nombreProd}" del catálogo?\n\nEsta acción se puede deshacer volviendo a agregar el producto.`)) {
+                eliminarProducto(id);
+            }
+        });
+    });
+
+    // Buscador
+    if (searchCatalogInput && !searchCatalogInput.dataset.listened) {
+        searchCatalogInput.dataset.listened = "true";
+        searchCatalogInput.addEventListener("input", (e) => {
+            const q = e.target.value.toLowerCase().trim();
+            if (q === "") {
+                renderCatalogList();
+            } else {
+                const filtrados = catalogoCompleto.filter(p => 
+                    p.title.toLowerCase().includes(q) || 
+                    p.category.toLowerCase().includes(q)
+                );
+                renderCatalogList(filtrados);
+            }
+        });
+    }
+}
+
+// ==========================================
+// 7. AÑADIR / ELIMINAR PRODUCTOS
+// ==========================================
+function setupProductForm() {
+    const form = document.getElementById("productForm");
+    if (!form) return;
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const title = document.getElementById("prodTitle").value.trim();
+        const price = parseFloat(document.getElementById("prodPrice").value);
+        const category = document.getElementById("prodCategory").value;
+        const tones = document.getElementById("prodTones").value.trim();
+        const stock = parseInt(document.getElementById("prodStock").value) || 1;
+
+        // Determinar ID único — siempre mayor que 1000
+        // para evitar colisión con los 21 productos del fallback hardcodeado
+        const baseMaxId = Math.max(
+            catalogoCompleto.reduce((max, p) => p.id > max ? p.id : max, 0),
+            1000
+        );
+        const newId = baseMaxId + 1;
+
+        // Comprimir imagen a max 300px para que quepa en localStorage sin problema
+        let imgFinal = "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400";
+        if (currentUploadedImageBase64) {
+            try {
+                imgFinal = await comprimirImagen(currentUploadedImageBase64, 300);
+            } catch(e) {
+                imgFinal = currentUploadedImageBase64; // usar original si falla la compresión
+            }
+        }
+
+        const nuevoProducto = {
+            id: newId,
+            title: title,
+            price: price,
+            category: category,
+            img: imgFinal,
+            stock: stock,
+            tones: tones
+        };
+
+        if (serverSyncActive) {
+            catalogoCompleto.push(nuevoProducto);
+            const guardado = await guardarEnServidor(catalogoCompleto);
+            if (guardado) {
+                mostrarNotificacion("Producto guardado permanentemente. ✓");
+                form.reset();
+                document.getElementById("btnRemovePreview").click();
+                currentUploadedImageBase64 = "";
+                loadCatalog();
+            } else {
+                catalogoCompleto.pop();
+                alert("Hubo un error al guardar el producto en el servidor.");
+            }
+        } else {
+            // Modo estático (localStorage)
+            localAddedProducts.push(nuevoProducto);
+            try {
+                localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
+            } catch(e) {
+                // Si localStorage está lleno, guardar sin imagen
+                nuevoProducto.img = "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400";
+                localAddedProducts[localAddedProducts.length - 1] = nuevoProducto;
+                localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
+                mostrarNotificacion("⚠️ Imagen no guardada (almacenamiento lleno). Producto agregado sin foto.");
+            }
+
+            localDeletedIds = localDeletedIds.filter(id => id !== newId);
+            localStorage.setItem('KARA_ADMIN_DELETED', JSON.stringify(localDeletedIds));
+
+            mostrarNotificacion("Producto agregado. ✓ — Ya aparece en la tienda y en este catálogo.");
+            form.reset();
+            document.getElementById("btnRemovePreview").click();
+            currentUploadedImageBase64 = "";
+            loadCatalog();
+        }
+    });
+}
+
+// Comprime una imagen base64 a un tamaño máximo de ancho/alto en píxeles
+function comprimirImagen(base64, maxSize = 300) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            let w = img.width, h = img.height;
+            if (w > h) { if (w > maxSize) { h = Math.round(h * maxSize / w); w = maxSize; } }
+            else        { if (h > maxSize) { w = Math.round(w * maxSize / h); h = maxSize; } }
+            canvas.width = w;
+            canvas.height = h;
+            canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL("image/jpeg", 0.75));
+        };
+        img.onerror = reject;
+        img.src = base64;
+    });
+}
+
+async function eliminarProducto(id) {
+    if (serverSyncActive) {
+        const nuevoCatalogo = catalogoCompleto.filter(p => p.id !== id);
+        const guardado = await guardarEnServidor(nuevoCatalogo);
+        if (guardado) {
+            mostrarNotificacion("Producto eliminado permanentemente. ✓");
+            loadCatalog();
+        } else {
+            alert("No se pudo guardar la eliminación en el servidor.");
+        }
+    } else {
+        // Buscar si estaba en añadidos locales
+        const esLocal = localAddedProducts.some(p => p.id === id);
+        if (esLocal) {
+            localAddedProducts = localAddedProducts.filter(p => p.id !== id);
+            localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
+        } else {
+            // Si es de los originales, registrar su ID como borrado
+            if (!localDeletedIds.includes(id)) {
+                localDeletedIds.push(id);
+                localStorage.setItem('KARA_ADMIN_DELETED', JSON.stringify(localDeletedIds));
+            }
+        }
+        mostrarNotificacion("Producto eliminado localmente. ✓ (Exporta el JSON para sincronizar)");
+        loadCatalog();
+    }
+}
+
+// Guardar array en el servidor local
+async function guardarEnServidor(lista) {
+    try {
+        const res = await fetch("/api/productos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(lista)
+        });
+        return res.ok;
+    } catch (e) {
+        console.error("Error en guardarEnServidor:", e);
+        return false;
+    }
+}
+
+// ==========================================
+// 8. EXPORTACIÓN Y UTILIDADES
+// ==========================================
+function exportarJsonCompleto() {
+    // Limpiamos los productos para que no tengan imágenes base64 gigantes en el archivo JSON
+    // si el usuario prefiere subirlas en local. Si es base64, las guardará igual, pero es mejor avisar
+    // que idealmente las imágenes sean relativas
+    const catalogoExportable = catalogoCompleto.map(p => {
+        // Si la imagen es base64, sugerimos cambiarla por una ruta limpia local
+        let imgExport = p.img;
+        if (imgExport.startsWith("data:image/")) {
+            // Sugerir nombre corto como "assets/images/nuevo-producto.jpeg"
+            const extension = imgExport.substring("data:image/".length, imgExport.indexOf(";base64"));
+            const safeTitle = p.title.toLowerCase().replace(/[^a-z0-9]/g, "-");
+            imgExport = `assets/images/${safeTitle}.${extension}`;
+        }
+        return {
+            id: p.id,
+            title: p.title,
+            price: p.price,
+            category: p.category,
+            img: imgExport,
+            stock: p.stock || 1,
+            tones: p.tones || ""
+        };
+    });
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(catalogoExportable, null, 4));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", "productos.json");
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+
+    mostrarNotificacion("Archivo productos.json listo. Guárdalo en la carpeta js/ 🥥");
+}
+
+function mostrarNotificacion(msg) {
+    const toast = document.getElementById("notificationToast");
+    const txt = document.getElementById("notificationText");
+    if (!toast) return;
+
+    txt.textContent = msg;
+    toast.classList.add("show");
+
+    setTimeout(() => {
+        toast.classList.remove("show");
+    }, 4000);
+}
