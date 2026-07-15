@@ -12,6 +12,11 @@ app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 // Servir la carpeta raíz como estática
 app.use(express.static(__dirname));
 
+// API para verificar si el servidor está activo
+app.get('/api/ping', (req, res) => {
+    res.json({ success: true, message: 'Server is active' });
+});
+
 // API para guardar el catálogo actualizado en productos.json
 app.post('/api/productos', (req, res) => {
     const productos = req.body;

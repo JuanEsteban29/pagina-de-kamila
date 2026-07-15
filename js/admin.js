@@ -80,11 +80,7 @@ async function setupSyncMode() {
 
     try {
         // Hacemos una petición rápida para ver si el servidor responde
-        const res = await fetch("/api/productos", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify([]) // cuerpo vacío de prueba
-        });
+        const res = await fetch("/api/ping");
         if (res.ok) {
             serverSyncActive = true;
             modeText.textContent = "Conexión local: SERVIDOR ACTIVO 🚀";
