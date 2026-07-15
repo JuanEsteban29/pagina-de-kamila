@@ -24,6 +24,12 @@ app.post('/api/productos', (req, res) => {
         return res.status(400).json({ error: 'La base de datos debe ser un arreglo de productos' });
     }
 
+    // Evitar que el catálogo quede vacío por peticiones de prueba o caché
+    if (productos.length === 0) {
+        console.warn('Petición de catálogo vacío ignorada por seguridad.');
+        return res.json({ success: true, message: 'Operación ignorada por seguridad.' });
+    }
+
     const filePath = path.join(__dirname, 'js', 'productos.json');
     fs.writeFile(filePath, JSON.stringify(productos, null, 4), 'utf8', (err) => {
         if (err) {
