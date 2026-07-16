@@ -439,7 +439,7 @@ function setupCoreEventListeners() {
 
     // Modales[cite: 6]
     setupModalEvents("favsToggle",       "favsModal",  "closeFavs",  actualizarVistaFavoritos); //[cite: 6]
-    setupModalEvents("btnAbrirEncuesta", "quizModal",  "closeQuiz",  lanzarEncuestaDinamica); //[cite: 6]
+    setupModalEvents("quizFloatingBtn",  "quizModal",  "closeQuiz",  lanzarEncuestaDinamica); //[cite: 6]
 
     // Buscador[cite: 6]
     const searchToggle   = document.getElementById("searchToggle"); //[cite: 6]
@@ -598,14 +598,6 @@ function setupServicesDropdown() {
         });
     }
 
-    // El botón de la encuesta vive dentro del modal de servicios; al abrir la
-    // encuesta, cerramos el modal de servicios para no dejar dos ventanas abiertas.
-    const btnQuiz = document.getElementById("btnAbrirEncuesta");
-    if (btnQuiz && servicesModal) {
-        btnQuiz.addEventListener("click", () => {
-            servicesModal.style.display = "none";
-        });
-    }
 }
 
 // ==========================================
@@ -787,62 +779,182 @@ function actualizarVistaFavoritos() {
 }
 
 // ==========================================
-// 8. SHADE FINDER QUIZ
+// 8. SHADE FINDER QUIZ — Mini quiz de 4 pasos con matching real
 // ==========================================
+const QUIZ_PREGUNTAS = [
+    {
+        key: "categoria",
+        titulo: "¿Qué buscas hoy?",
+        opciones: [
+            { label: "💄 Rostro (bases, blush, correctores)", value: "rostro" },
+            { label: "👁️ Ojos (máscaras, cejas)", value: "ojos" },
+            { label: "💋 Labios (gloss, tintas)", value: "labios" },
+            { label: "🌴 Sorpréndeme, de todo un poco", value: "todas" }
+        ]
+    },
+    {
+        key: "acabado",
+        titulo: "¿Qué acabado prefieres lucir?",
+        opciones: [
+            { label: "✨ Glow / Destellante", value: "glow" },
+            { label: "🥥 Natural / Mate", value: "natural" },
+            { label: "🤷‍♀️ Da igual, muéstrame lo mejor", value: "any" }
+        ]
+    },
+    {
+        key: "presupuesto",
+        titulo: "¿Cuál es tu presupuesto aproximado?",
+        opciones: [
+            { label: "💵 Hasta $5", value: "economico" },
+            { label: "💎 Entre $5 y $10", value: "premium" },
+            { label: "🚀 Sin límite", value: "sinlimite" }
+        ]
+    },
+    {
+        key: "ocasion",
+        titulo: "¿Para qué ocasión es?",
+        opciones: [
+            { label: "☀️ Uso diario", value: "Uso Diario" },
+            { label: "🎉 Fiesta o evento", value: "una Fiesta" },
+            { label: "🎁 Es un regalo", value: "un Regalo" }
+        ]
+    }
+];
+
+let quizRespuestas = {};
+let quizPaso = 0;
+
 function lanzarEncuestaDinamica() {
-    const container = document.getElementById("quizContainer"); //[cite: 6]
-    if (!container) return; //[cite: 6]
+    quizRespuestas = {};
+    quizPaso = 0;
+    renderQuizPaso();
+}
+
+function renderQuizPaso() {
+    const container = document.getElementById("quizContainer");
+    if (!container) return;
+
+    if (quizPaso >= QUIZ_PREGUNTAS.length) {
+        renderQuizResultado();
+        return;
+    }
+
+    const pregunta = QUIZ_PREGUNTAS[quizPaso];
+    const porcentaje = Math.round(((quizPaso) / QUIZ_PREGUNTAS.length) * 100);
 
     container.innerHTML = `
         <div class="quiz-progress-wrapper">
-            <span class="quiz-progress-text">Paso 1 de 1 — Tu Perfil Personalizado</span>
+            <span class="quiz-progress-text">Paso ${quizPaso + 1} de ${QUIZ_PREGUNTAS.length} — Encuentra tu producto ideal</span>
+            <div class="quiz-progress-track"><div class="quiz-progress-fill" style="width:${porcentaje}%;"></div></div>
         </div>
-        <h3 class="quiz-title">¿Qué tipo de acabado prefieres lucir bajo el sol tropical?</h3>
+        <h3 class="quiz-title">${pregunta.titulo}</h3>
         <div class="quiz-options-list">
-            <button class="quiz-option-btn" data-type="glow">✨ Acabado Glow / Destellante Satinado</button>
-            <button class="quiz-option-btn" data-type="natural">🥥 Sutil / Efecto Hidratación de Coco Natural</button>
-        </div>`; //[cite: 6]
+            ${pregunta.opciones.map(op => `<button class="quiz-option-btn" data-value="${op.value}">${op.label}</button>`).join("")}
+        </div>
+        ${quizPaso > 0 ? `<button class="quiz-back-btn" id="quizBackBtn">← Volver</button>` : ""}
+    `;
 
     container.querySelectorAll(".quiz-option-btn").forEach(btn => {
         btn.addEventListener("click", () => {
-            btn.classList.add("selected"); //[cite: 6]
-            const tipo = btn.dataset.type; //[cite: 6]
-            // Selecciona un match idóneo dentro del inventario real (id 3: Blush con brillo o id 11: Tinta para labios)[cite: 4, 6]
-            const prod = dbProductos.find(p => p.id === (tipo === "glow" ? 3 : 11)); //[cite: 6]
-            setTimeout(() => {
-                container.innerHTML = `
-                    <div style="text-align:center;padding:0.5rem;">
-                        <span style="font-size:3rem;">🌴</span>
-                        <h4 style="margin:10px 0;color:var(--primary);font-family:'Playfair Display',serif;font-size:1.4rem;">¡Tu Look Ideal Encontrado!</h4>
-                        <p style="font-size:0.88rem;line-height:1.5;color:var(--text-muted);margin-bottom:1.5rem;">
-                            Basado en tu preferencia, tu match perfecto es:
-                        </p>
-                        <div style="background:var(--bg-main);padding:1rem;border-radius:16px;border:1px solid var(--border-color);display:flex;gap:12px;align-items:center;text-align:left;margin-bottom:1.5rem;">
-                            <img src="${prod.img}" style="width:70px;height:70px;object-fit:cover;border-radius:10px;" onerror="this.src='https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=100'">
-                            <div style="flex-grow:1;">
-                                <h5 style="font-size:0.9rem;font-weight:600;margin-bottom:4px;">${prod.title}</h5>
-                                <strong style="color:var(--primary);font-size:0.95rem;">$${prod.price.toFixed(2)}</strong>
-                            </div>
-                            <button id="btnQuizAddCart" class="compact-btn" data-id="${prod.id}"
-                                    style="width:auto!important;padding:8px 12px!important;white-space:nowrap;">Llevarlo</button>
-                        </div>
-                        <p style="font-size:0.75rem;color:#999;">Esta ventana se cerrará automáticamente.</p>
-                    </div>`; //[cite: 6]
-
-                const btnAddQuiz = document.getElementById("btnQuizAddCart"); //[cite: 6]
-                if (btnAddQuiz) {
-                    btnAddQuiz.addEventListener("click", () => {
-                        agregarAlCarrito(prod.id); //[cite: 6]
-                        btnAddQuiz.textContent = "¡Añadido! ✓"; //[cite: 6]
-                        btnAddQuiz.style.background = "#25D366"; //[cite: 6]
-                    });
-                }
-                setTimeout(() => {
-                    document.getElementById("quizModal").style.display = "none"; //[cite: 6]
-                }, 5000); //[cite: 6]
-            }, 400); //[cite: 6]
+            quizRespuestas[pregunta.key] = btn.dataset.value;
+            quizPaso += 1;
+            renderQuizPaso();
         });
     });
+
+    const backBtn = document.getElementById("quizBackBtn");
+    if (backBtn) {
+        backBtn.addEventListener("click", () => {
+            quizPaso = Math.max(0, quizPaso - 1);
+            renderQuizPaso();
+        });
+    }
+}
+
+function calcularRecomendacionesQuiz(respuestas) {
+    const conStock = dbProductos.filter(p => p.stock > 0);
+    const base = conStock.length > 0 ? conStock : dbProductos;
+
+    const glowKeywords = /brillo|gloss|vinyl|shine|destell/i;
+    const matteKeywords = /matte|mate|polvo|translúcido|translucido/i;
+
+    const puntuados = base.map(p => {
+        let score = 0;
+        const titulo = p.title.toLowerCase();
+
+        if (respuestas.categoria && respuestas.categoria !== "todas") {
+            score += p.category === respuestas.categoria ? 4 : -2;
+        }
+        if (respuestas.acabado === "glow" && glowKeywords.test(titulo)) score += 3;
+        if (respuestas.acabado === "natural" && matteKeywords.test(titulo)) score += 3;
+
+        if (respuestas.presupuesto === "economico" && p.price <= 5) score += 2;
+        if (respuestas.presupuesto === "premium" && p.price > 5 && p.price <= 10) score += 2;
+        if (respuestas.presupuesto === "sinlimite") score += 1;
+
+        score += Math.min(p.stock, 5) * 0.1; // leve preferencia a lo que hay más en stock
+
+        return { producto: p, score };
+    });
+
+    puntuados.sort((a, b) => b.score - a.score);
+    return puntuados.slice(0, 3).map(s => s.producto);
+}
+
+function renderQuizResultado() {
+    const container = document.getElementById("quizContainer");
+    if (!container) return;
+
+    const recomendados = calcularRecomendacionesQuiz(quizRespuestas);
+
+    if (recomendados.length === 0) {
+        container.innerHTML = `
+            <div style="text-align:center;padding:1rem;">
+                <span style="font-size:2.5rem;">🥲</span>
+                <p style="margin-top:0.8rem;color:var(--text-muted);">No encontramos productos disponibles ahora mismo. ¡Escríbenos por WhatsApp y te ayudamos directamente!</p>
+                <button class="quiz-back-btn" id="quizRestartBtn">Intentar de nuevo</button>
+            </div>`;
+        const restart = document.getElementById("quizRestartBtn");
+        if (restart) restart.addEventListener("click", lanzarEncuestaDinamica);
+        return;
+    }
+
+    container.innerHTML = `
+        <div style="text-align:center;padding:0.25rem 0 0.5rem;">
+            <span style="font-size:2.5rem;">🌴</span>
+            <h4 style="margin:8px 0;color:var(--primary);font-family:'Playfair Display',serif;font-size:1.3rem;">¡Tus recomendaciones están listas!</h4>
+            <p style="font-size:0.85rem;line-height:1.5;color:var(--text-muted);margin-bottom:0.5rem;">
+                Basado en tus respuestas, esto es lo que más te conviene:
+            </p>
+        </div>
+        <div class="quiz-results-grid">
+            ${recomendados.map(prod => `
+                <div class="quiz-result-card">
+                    <img src="${prod.img}" onerror="this.src='https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=100'">
+                    <div class="quiz-result-info">
+                        <h5>${prod.title}</h5>
+                        <strong style="color:var(--primary);font-size:0.9rem;">$${prod.price.toFixed(2)}</strong>
+                    </div>
+                    <button class="compact-btn quiz-add-btn" data-id="${prod.id}" style="width:auto!important;padding:8px 12px!important;white-space:nowrap;">Llevarlo</button>
+                </div>
+            `).join("")}
+        </div>
+        <div style="text-align:center;">
+            <button class="quiz-back-btn" id="quizRestartBtn">Volver a intentar</button>
+        </div>
+    `;
+
+    container.querySelectorAll(".quiz-add-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const id = parseInt(btn.dataset.id);
+            agregarAlCarrito(id);
+            btn.textContent = "¡Añadido! ✓";
+            btn.style.background = "#25D366";
+        });
+    });
+
+    const restartBtn = document.getElementById("quizRestartBtn");
+    if (restartBtn) restartBtn.addEventListener("click", lanzarEncuestaDinamica);
 }
 
 // ==========================================
