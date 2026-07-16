@@ -3,11 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KARA Makeup - Elegancia y Glamour Premium</title>
+    <title>KARA Makeup - Cosméticos Premium en Venezuela | Base, Labiales, Blush y Más</title>
+
+    <!-- SEO -->
+    <meta name="description" content="KARA Makeup: cosméticos premium en Venezuela. Bases matte, labiales, blush, brochas y más. Envíos a todo el país y asesoría personalizada por WhatsApp.">
+    <meta name="keywords" content="maquillaje Venezuela, cosméticos premium, base matte, labiales, blush, KARA Makeup">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://pagina-de-kamila-production.up.railway.app/">
+
+    <!-- Open Graph (WhatsApp, Facebook, Instagram) -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://pagina-de-kamila-production.up.railway.app/">
+    <meta property="og:title" content="KARA Makeup - Cosméticos Premium en Venezuela">
+    <meta property="og:description" content="Bases matte, labiales, blush, brochas y más. Envíos a todo el país y asesoría personalizada por WhatsApp.">
+    <meta property="og:image" content="https://pagina-de-kamila-production.up.railway.app/assets/images/KARA-logo-fondos.png">
+    <meta property="og:locale" content="es_VE">
+    <meta property="og:site_name" content="KARA Makeup">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="KARA Makeup - Cosméticos Premium en Venezuela">
+    <meta name="twitter:description" content="Bases matte, labiales, blush, brochas y más. Envíos a todo el país.">
+    <meta name="twitter:image" content="https://pagina-de-kamila-production.up.railway.app/assets/images/KARA-logo-fondos.png">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/images/KARA-logo-fondos.png">
+    <link rel="apple-touch-icon" href="assets/images/KARA-logo-fondos.png">
+    <meta name="theme-color" content="#E22963">
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,600;0,700;1,300&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/stile.css">
+    <link rel="preload" as="image" href="assets/images/vinyl.jpeg">
+
+    <!-- Datos estructurados: solo información real de la tienda -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Store",
+        "name": "KARA Makeup",
+        "description": "Cosméticos premium: bases matte, labiales, blush, brochas y accesorios de maquillaje.",
+        "url": "https://pagina-de-kamila-production.up.railway.app/",
+        "image": "assets/images/KARA-logo-fondos.png",
+        "email": "hola@karamakeup.com",
+        "areaServed": "VE"
+    }
+    </script>
 </head>
 <body>
 
@@ -131,6 +173,8 @@
             <img src="assets/images/vinyl.jpeg"
                  alt="KARA Makeup — Vinyl Lasting Lip Gloss"
                  class="hero-model-img"
+                 fetchpriority="high"
+                 decoding="async"
                  onerror="this.src='https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=800'">
             <div class="hero-img-badge">
                 <span>NEW</span>
@@ -248,8 +292,8 @@
     </a>
 
     <!-- Librerías de Animación Core -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-    <script src="js/main.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js" defer></script>
+    <script src="js/main.js" defer></script>
 </body>
 </html>
