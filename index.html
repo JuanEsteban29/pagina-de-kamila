@@ -68,47 +68,9 @@
                 <a href="#inicio" class="nav-link active">Inicio</a>
                 <a href="#productos" class="nav-link">Productos</a>
                 <a href="#categorias" class="nav-link">Categorías</a>
-                
-                <div class="services-wrapper" id="servicesWrapper">
-                    <button class="nav-services-btn" id="serviciosToggle">
-                        Servicios <span class="arrow-indicator">▼</span>
-                    </button>
-                    
-                    <div class="services-dropdown-box" id="servicesDropdown">
-                        <div class="dropdown-accordion-item">
-                            <button class="dropdown-item-link accordion-toggle">
-                                <span>☀️</span> Maquillaje de Día <span class="sub-arrow">▼</span>
-                            </button>
-                            <div class="submenu-look-content">
-                                <div class="compact-look-card">
-                                    <img src="assets/images/look-dia-real.jpg" alt="Look de Día" onerror="this.src='https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=400'">
-                                    <p>Acabado fresco, luminoso y natural (Soft Glow). Perfecto para eventos diurnos, reuniones corporativas o sesiones editoriales.</p>
-                                    <button class="btn-reserva-servicio compact-btn" data-service="dia">Reservar este Look</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="dropdown-accordion-item">
-                            <button class="dropdown-item-link accordion-toggle">
-                                <span>🌙</span> Maquillaje de Noche <span class="sub-arrow">▼</span>
-                            </button>
-                            <div class="submenu-look-content">
-                                <div class="compact-look-card">
-                                    <img src="assets/images/look-noche-real.jpg" alt="Look de Noche" onerror="this.src='https://images.unsplash.com/photo-1493421419110-74f4e85ba124?auto=format&fit=crop&q=80&w=400'">
-                                    <p>Mirada de impacto, contornos definidos de alta definición (Glam Night) con técnicas de larga duración a prueba de todo.</p>
-                                    <button class="btn-reserva-servicio compact-btn" data-service="noche">Reservar este Look</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <button class="dropdown-item-link" id="btnAbrirEncuesta">
-                            <span>📋</span> Shade Finder Quiz
-                        </button>
-                        <button class="dropdown-item-link" id="btnAgendarMaquilladora">
-                            <span>💖</span> Servicio a Domicilio
-                        </button>
-                    </div>
-                </div>
+                <button type="button" class="nav-link nav-services-btn" id="serviciosToggle">
+                    Servicios
+                </button>
             </nav>
 
             <div class="header-actions">
@@ -277,6 +239,35 @@
             <button class="modal-close" id="closeFavs" aria-label="Cerrar favoritos">&times;</button>
             <h3>Tus Favoritos Guardados</h3>
             <div class="modal-body" id="favsModalBody"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="servicesModal">
+        <div class="modal-content" style="max-width: 640px;">
+            <button class="modal-close" id="closeServices" aria-label="Cerrar servicios">&times;</button>
+            <h3>Nuestros Servicios</h3>
+            <div class="services-grid">
+                <div class="service-card">
+                    <img src="assets/images/look-dia-real.jpg" alt="Look de Día" onerror="this.src='https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=400'">
+                    <h4>☀️ Maquillaje de Día</h4>
+                    <p>Acabado fresco, luminoso y natural (Soft Glow). Perfecto para eventos diurnos, reuniones corporativas o sesiones editoriales.</p>
+                    <button class="btn-reserva-servicio compact-btn" data-service="dia">Reservar este Look</button>
+                </div>
+                <div class="service-card">
+                    <img src="assets/images/look-noche-real.jpg" alt="Look de Noche" onerror="this.src='https://images.unsplash.com/photo-1493421419110-74f4e85ba124?auto=format&fit=crop&q=80&w=400'">
+                    <h4>🌙 Maquillaje de Noche</h4>
+                    <p>Mirada de impacto, contornos definidos de alta definición (Glam Night) con técnicas de larga duración a prueba de todo.</p>
+                    <button class="btn-reserva-servicio compact-btn" data-service="noche">Reservar este Look</button>
+                </div>
+            </div>
+            <div class="services-extra">
+                <button class="dropdown-item-link" id="btnAbrirEncuesta">
+                    <span>📋</span> Shade Finder Quiz
+                </button>
+                <button class="dropdown-item-link" id="btnAgendarMaquilladora">
+                    <span>💖</span> Servicio a Domicilio
+                </button>
+            </div>
         </div>
     </div>
 

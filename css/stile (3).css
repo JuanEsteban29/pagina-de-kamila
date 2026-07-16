@@ -182,35 +182,52 @@ button {
     margin-left: 2px;
 }
 
-/* SERVICES DROPDOWN */
-.services-wrapper { 
-    position: relative; 
-    display: inline-block; 
+/* SERVICIOS: tarjetas dentro del modal (ver #servicesModal) */
+.services-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.5rem 0;
 }
 
-.services-dropdown-box {
-    position: absolute;
-    top: 140%; 
-    left: 50%;
-    transform: translateX(-50%) translateY(15px);
-    background: var(--bg-surface) !important;
-    width: 320px;
-    max-height: 80vh; 
-    overflow-y: auto;
-    box-shadow: 0px 15px 40px rgba(0,0,0,0.12) !important;
-    border-radius: 0px !important; /* Elegant square corners */
-    padding: 10px !important;
-    opacity: 0; 
-    visibility: hidden;
-    z-index: 1001 !important;
+@media (max-width: 600px) {
+    .services-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.service-card {
     border: 1px solid var(--border-color);
-    transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    padding: 1rem;
+    text-align: left;
 }
 
-.services-wrapper.active .services-dropdown-box {
-    opacity: 1; 
-    visibility: visible;
-    transform: translateX(-50%) translateY(0);
+.service-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    margin-bottom: 0.8rem;
+}
+
+.service-card h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.service-card p {
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.services-extra {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
 }
 
 .dropdown-item-link {
@@ -233,55 +250,6 @@ button {
 .dropdown-item-link:hover {
     background: rgba(0, 0, 0, 0.03) !important;
     color: var(--primary) !important;
-}
-
-.dropdown-accordion-item {
-    border-bottom: 1px solid var(--border-color);
-    margin-bottom: 4px; 
-    border-radius: 0; 
-    overflow: hidden;
-}
-
-.sub-arrow { 
-    margin-left: auto; 
-    font-size: 0.65rem; 
-    color: var(--text-muted); 
-    transition: transform 0.3s ease; 
-}
-
-.dropdown-accordion-item.active .sub-arrow { 
-    transform: rotate(180deg); 
-    color: var(--primary); 
-}
-
-.submenu-look-content {
-    max-height: 0; 
-    overflow: hidden;
-    transition: max-height 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-.dropdown-accordion-item.active .submenu-look-content { 
-    max-height: 380px; 
-}
-
-.compact-look-card { 
-    padding: 8px 12px 16px 12px; 
-    display: flex; 
-    flex-direction: column; 
-    gap: 12px; 
-}
-
-.compact-look-card img { 
-    width: 100%; 
-    height: 140px; 
-    object-fit: cover; 
-    border-radius: 0px; 
-}
-
-.compact-look-card p { 
-    font-size: 0.78rem; 
-    line-height: 1.5; 
-    color: var(--text-muted); 
 }
 
 .compact-btn {
@@ -384,7 +352,26 @@ button {
     border: 1px solid var(--border-color); 
     outline: none; 
     color: #1c1c1c; 
+    background: #ffffff;
     font-size: 0.8rem;
+}
+
+/* En móvil: el dropdown de 280px anclado al icono se salía de la pantalla
+   (por eso se veía "a la mitad"). Aquí pasa a ser una barra fija de ancho
+   completo, siempre totalmente visible sin importar dónde esté el icono. */
+@media (max-width: 640px) {
+    .search-dropdown {
+        position: fixed;
+        top: calc(var(--header-h) + var(--announce-h) + 10px);
+        left: 1rem;
+        right: 1rem;
+        width: auto;
+    }
+
+    .search-dropdown input {
+        font-size: 16px; /* evita que iOS haga zoom automático al enfocar */
+        padding: 0.75rem 1rem;
+    }
 }
 
 .menu-hamburger { 

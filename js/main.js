@@ -523,81 +523,57 @@ function setupCartPanelEvents() {
 }
 
 // ==========================================
-// 5. ACORDEÓN DE SERVICIOS
+// 5. MODAL DE SERVICIOS
 // ==========================================
 function setupServicesDropdown() {
-    const wrapper      = document.getElementById("servicesWrapper"); //[cite: 6]
-    const toggleBtn    = document.getElementById("serviciosToggle"); //[cite: 6]
-    const dropdownMenu = document.getElementById("servicesDropdown"); //[cite: 6]
-    if (!toggleBtn || !dropdownMenu) return; //[cite: 6]
+    const servicesModal = document.getElementById("servicesModal");
+    setupModalEvents("serviciosToggle", "servicesModal", "closeServices");
 
-    toggleBtn.addEventListener("click", (e) => {
-        e.preventDefault(); //[cite: 6]
-        e.stopPropagation(); //[cite: 6]
-        wrapper.classList.toggle("active"); //[cite: 6]
-    });
-
-    dropdownMenu.addEventListener("click", (e) => e.stopPropagation()); //[cite: 6]
-    document.addEventListener("click", () => {
-        wrapper.classList.remove("active"); //[cite: 6]
-        cerrarTodosLosAcordeones(); //[cite: 6]
-    });
-
-    const togglesAcordeon = dropdownMenu.querySelectorAll(".accordion-toggle"); //[cite: 6]
-    togglesAcordeon.forEach(btn => {
+    document.querySelectorAll(".btn-reserva-servicio").forEach(btn => {
         btn.addEventListener("click", (e) => {
-            e.preventDefault(); //[cite: 6]
-            e.stopPropagation(); //[cite: 6]
-            const itemPadre = btn.closest(".dropdown-accordion-item"); //[cite: 6]
-            const estaActivo = itemPadre.classList.contains("active"); //[cite: 6]
-            cerrarTodosLosAcordeones(); //[cite: 6]
-            if (!estaActivo) itemPadre.classList.add("active"); //[cite: 6]
-        });
-    });
-
-    dropdownMenu.querySelectorAll(".btn-reserva-servicio").forEach(btn => {
-        btn.addEventListener("click", (e) => {
-            e.preventDefault(); //[cite: 6]
-            const modelo = btn.getAttribute("data-service"); //[cite: 6]
+            e.preventDefault();
+            const modelo = btn.getAttribute("data-service");
             const nombre = modelo === "dia"
                 ? "Maquillaje de Día (Sunset Glow)"
-                : "Maquillaje de Noche (Tropical Night)"; //[cite: 6]
-            const msg = `¡Hola KARA! 🌴 Me encantaría reservar una cita para el estilo de *${nombre}*. ¿Cuáles son tus próximas fechas disponibles?`; //[cite: 6]
-            const textoOriginal = btn.textContent; //[cite: 6]
-            btn.textContent = "Abriendo... 🌴"; //[cite: 6]
-            btn.style.backgroundColor = "#25D366"; //[cite: 6]
-            btn.style.color = "#ffffff"; //[cite: 6]
-            window.open("https://wa.me/584122665492?text=" + encodeURIComponent(msg), "_blank"); //[cite: 6]
+                : "Maquillaje de Noche (Tropical Night)";
+            const msg = `¡Hola KARA! 🌴 Me encantaría reservar una cita para el estilo de *${nombre}*. ¿Cuáles son tus próximas fechas disponibles?`;
+            const textoOriginal = btn.textContent;
+            btn.textContent = "Abriendo... 🌴";
+            btn.style.backgroundColor = "#25D366";
+            btn.style.color = "#ffffff";
+            window.open("https://wa.me/584122665492?text=" + encodeURIComponent(msg), "_blank");
             setTimeout(() => {
-                btn.textContent = textoOriginal; //[cite: 6]
-                btn.style.backgroundColor = ""; //[cite: 6]
-                btn.style.color = ""; //[cite: 6]
-                wrapper.classList.remove("active"); //[cite: 6]
-                cerrarTodosLosAcordeones(); //[cite: 6]
-            }, 1000); //[cite: 6]
+                btn.textContent = textoOriginal;
+                btn.style.backgroundColor = "";
+                btn.style.color = "";
+                if (servicesModal) servicesModal.style.display = "none";
+            }, 1000);
         });
     });
 
-    const btnAgendar = document.getElementById("btnAgendarMaquilladora"); //[cite: 6]
+    const btnAgendar = document.getElementById("btnAgendarMaquilladora");
     if (btnAgendar) {
         btnAgendar.addEventListener("click", (e) => {
-            e.preventDefault(); //[cite: 6]
-            const msg = "¡Hola KARA! Me gustaría solicitar información para agendar una Maquilladora Profesional a domicilio."; //[cite: 6]
-            const contenidoOriginal = btnAgendar.innerHTML; //[cite: 6]
-            btnAgendar.innerHTML = "<span>💬</span> Abriendo WhatsApp..."; //[cite: 6]
-            btnAgendar.style.color = "#25D366"; //[cite: 6]
-            window.open("https://wa.me/584122665492?text=" + encodeURIComponent(msg), "_blank"); //[cite: 6]
+            e.preventDefault();
+            const msg = "¡Hola KARA! Me gustaría solicitar información para agendar una Maquilladora Profesional a domicilio.";
+            const contenidoOriginal = btnAgendar.innerHTML;
+            btnAgendar.innerHTML = "<span>💬</span> Abriendo WhatsApp...";
+            btnAgendar.style.color = "#25D366";
+            window.open("https://wa.me/584122665492?text=" + encodeURIComponent(msg), "_blank");
             setTimeout(() => {
-                btnAgendar.innerHTML = contenidoOriginal; //[cite: 6]
-                btnAgendar.style.color = ""; //[cite: 6]
-                wrapper.classList.remove("active"); //[cite: 6]
-            }, 1000); //[cite: 6]
+                btnAgendar.innerHTML = contenidoOriginal;
+                btnAgendar.style.color = "";
+                if (servicesModal) servicesModal.style.display = "none";
+            }, 1000);
         });
     }
 
-    function cerrarTodosLosAcordeones() {
-        dropdownMenu.querySelectorAll(".dropdown-accordion-item").forEach(item => {
-            item.classList.remove("active"); //[cite: 6]
+    // El botón de la encuesta vive dentro del modal de servicios; al abrir la
+    // encuesta, cerramos el modal de servicios para no dejar dos ventanas abiertas.
+    const btnQuiz = document.getElementById("btnAbrirEncuesta");
+    if (btnQuiz && servicesModal) {
+        btnQuiz.addEventListener("click", () => {
+            servicesModal.style.display = "none";
         });
     }
 }
