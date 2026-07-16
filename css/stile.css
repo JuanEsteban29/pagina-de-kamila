@@ -956,6 +956,12 @@ button {
     padding: 3rem 0 1.5rem; 
 }
 
+/* El footer usa la clase genérica .container (padding: 6rem), que se sumaba
+   al padding propio del footer y lo hacía verse gigante. Se anula aquí. */
+.main-footer .container {
+    padding: 0 2rem;
+}
+
 .footer-grid { 
     display: grid; 
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
