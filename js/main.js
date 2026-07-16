@@ -329,69 +329,23 @@ function renderProductos(filtrados = null) {
     if (window.gsap && window.ScrollTrigger) {
         animateProductCards();
     }
-    
-    // Vincular animaciones de hover fluidas por GSAP
-    setupCardHoverAnimations();
 }
 
 function setupCardHoverAnimations() {
     if (typeof gsap === "undefined") return;
-
     const cards = document.querySelectorAll(".product-card");
     cards.forEach(card => {
         const img = card.querySelector(".product-image-container img");
         const btn = card.querySelector(".btn-add-cart");
-
         card.addEventListener("mouseenter", () => {
-            gsap.to(card, {
-                y: -8,
-                boxShadow: "0 20px 40px rgba(0, 0, 0, 0.04), 0 5px 15px rgba(226, 41, 99, 0.04)",
-                borderColor: "rgba(226, 41, 99, 0.15)",
-                duration: 0.4,
-                ease: "power2.out"
-            });
-            if (img) {
-                gsap.to(img, {
-                    scale: 1.06,
-                    duration: 0.5,
-                    ease: "power2.out"
-                });
-            }
-            if (btn) {
-                gsap.to(btn, {
-                    background: "var(--gradient)",
-                    y: -2,
-                    boxShadow: "0 6px 15px rgba(226, 41, 99, 0.2)",
-                    duration: 0.3,
-                    ease: "power2.out"
-                });
-            }
+            gsap.to(card, { y: -6, boxShadow: "0 20px 50px rgba(0,0,0,0.08)", duration: 0.4, ease: "power2.out" });
+            if (img) gsap.to(img, { scale: 1.08, duration: 0.6, ease: "power2.out" });
+            if (btn) gsap.to(btn, { backgroundColor: "transparent", color: "#000000", duration: 0.3, ease: "power2.out" });
         });
-
         card.addEventListener("mouseleave", () => {
-            gsap.to(card, {
-                y: 0,
-                boxShadow: "0 10px 30px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.01)",
-                borderColor: "var(--border-color)",
-                duration: 0.4,
-                ease: "power2.out"
-            });
-            if (img) {
-                gsap.to(img, {
-                    scale: 1,
-                    duration: 0.5,
-                    ease: "power2.out"
-                });
-            }
-            if (btn) {
-                gsap.to(btn, {
-                    background: "#1c1c1c",
-                    y: 0,
-                    boxShadow: "none",
-                    duration: 0.3,
-                    ease: "power2.out"
-                });
-            }
+            gsap.to(card, { y: 0, boxShadow: "none", duration: 0.4, ease: "power2.out" });
+            if (img) gsap.to(img, { scale: 1, duration: 0.6, ease: "power2.out" });
+            if (btn) gsap.to(btn, { backgroundColor: "#000000", color: "#ffffff", duration: 0.3, ease: "power2.out" });
         });
     });
 }
