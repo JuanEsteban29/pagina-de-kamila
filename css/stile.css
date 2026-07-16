@@ -953,13 +953,13 @@ button {
 .main-footer { 
     background: #000000 !important; 
     color: #FFFFFF; 
-    padding: 5rem 0 2rem; 
+    padding: 3rem 0 1.5rem; 
 }
 
 .footer-grid { 
     display: grid; 
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
-    gap: 3rem; 
+    gap: 2rem; 
 }
 
 .footer-brand h3 { 
@@ -967,7 +967,7 @@ button {
     color: #FFFFFF !important; 
     font-family: 'Playfair Display', serif; 
     letter-spacing: 4px;
-    margin-bottom: 1rem;
+    margin-bottom: 0.6rem;
 }
 
 .footer-brand p { 
@@ -1008,15 +1008,24 @@ button {
 .footer-contact p {
     color: #A0A0A0;
     font-size: 0.85rem;
-    margin-bottom: 0.8rem;
-    line-height: 1.7;
+    margin-bottom: 0.6rem;
+    line-height: 1.6;
+}
+
+.footer-contact p a {
+    color: #A0A0A0;
+    transition: color 0.2s ease;
+}
+
+.footer-contact p a:hover {
+    color: #FFFFFF;
 }
 
 .footer-bottom { 
     text-align: center; 
-    padding-top: 2.5rem; 
+    padding-top: 1.5rem; 
     border-top: 1px solid #222222; 
-    margin-top: 4rem; 
+    margin-top: 2rem; 
     color: #666; 
     font-size: 0.78rem;
     letter-spacing: 0.5px;
