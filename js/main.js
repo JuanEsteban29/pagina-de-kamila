@@ -692,7 +692,7 @@ function actualizarVistaCarrito() {
 
     if (carrito.length === 0) {
         const txtVacio = document.createElement("p"); //[cite: 6]
-        txtVacio.style.cssText = "text-align:center;padding:2rem 1rem;color:#666;font-size:0.9rem;"; //[cite: 6]
+        txtVacio.style.cssText = "text-align:center;padding:2rem 1rem;color:rgba(255,255,255,0.9);font-size:0.9rem;"; //[cite: 6]
         txtVacio.textContent = "Tu bolsa playera está vacía."; //[cite: 6]
         body.appendChild(txtVacio); //[cite: 6]
         totalElem.textContent = "$0.00"; //[cite: 6]
@@ -765,7 +765,7 @@ function actualizarVistaFavoritos() {
     body.innerHTML = ""; //[cite: 6]
     const listaFavs = dbProductos.filter(p => favoritos.includes(p.id)); //[cite: 6]
     if (listaFavs.length === 0) {
-        body.innerHTML = `<p style="text-align:center;padding:1rem;color:#666;">No tienes productos guardados.</p>`; //[cite: 6]
+        body.innerHTML = `<p style="text-align:center;padding:1rem;color:rgba(255,255,255,0.9);">No tienes productos guardados.</p>`; //[cite: 6]
         return; //[cite: 6]
     }
     listaFavs.forEach(item => {
@@ -914,7 +914,7 @@ function renderQuizResultado() {
         container.innerHTML = `
             <div style="text-align:center;padding:1rem;">
                 <span style="font-size:2.5rem;">🥲</span>
-                <p style="margin-top:0.8rem;color:var(--text-muted);">No encontramos productos disponibles ahora mismo. ¡Escríbenos por WhatsApp y te ayudamos directamente!</p>
+                <p style="margin-top:0.8rem;color:rgba(255,255,255,0.9);">No encontramos productos disponibles ahora mismo. ¡Escríbenos por WhatsApp y te ayudamos directamente!</p>
                 <button class="quiz-back-btn" id="quizRestartBtn">Intentar de nuevo</button>
             </div>`;
         const restart = document.getElementById("quizRestartBtn");
@@ -925,8 +925,8 @@ function renderQuizResultado() {
     container.innerHTML = `
         <div style="text-align:center;padding:0.25rem 0 0.5rem;">
             <span style="font-size:2.5rem;">🌴</span>
-            <h4 style="margin:8px 0;color:var(--primary);font-family:'Playfair Display',serif;font-size:1.3rem;">¡Tus recomendaciones están listas!</h4>
-            <p style="font-size:0.85rem;line-height:1.5;color:var(--text-muted);margin-bottom:0.5rem;">
+            <h4 style="margin:8px 0;color:#FFFFFF;font-family:'Playfair Display',serif;font-size:1.3rem;">¡Tus recomendaciones están listas!</h4>
+            <p style="font-size:0.85rem;line-height:1.5;color:rgba(255,255,255,0.9);margin-bottom:0.5rem;">
                 Basado en tus respuestas, esto es lo que más te conviene:
             </p>
         </div>

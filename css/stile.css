@@ -427,7 +427,7 @@ button {
 
 .compact-btn {
     background: var(--gradient) !important; 
-    color: #ffffff !important;
+    color: #FFFFFF !important;
     width: 100% !important; 
     padding: 12px !important; 
     border-radius: 10px !important;
@@ -568,8 +568,8 @@ button {
     display: inline-flex; 
     align-items: center; 
     justify-content: center;
-    background: var(--gradient) !important;
-    color: #FFFFFF !important; 
+    background: #FFFFFF !important;
+    color: var(--primary) !important; 
     font-weight: 700 !important; 
     padding: 1rem 2.5rem !important; 
     border-radius: 14px !important;
@@ -577,13 +577,13 @@ button {
     letter-spacing: 2.5px !important;
     font-size: 0.8rem !important;
     border: none !important;
-    box-shadow: 0 8px 24px rgba(226, 41, 99, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     transition: all 0.3s ease !important;
 }
 
 .btn-gradient:hover { 
     transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(226, 41, 99, 0.4);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
 }
 
 .section-title { 
@@ -899,7 +899,7 @@ button {
 }
 
 #cartModal .modal-content {
-    background: var(--bg-surface); 
+    background: var(--gradient); 
     width: 100%; 
     max-width: 440px; 
     height: 100vh;
@@ -909,7 +909,7 @@ button {
     margin-right: -440px; 
     border-radius: 20px 0 0 20px !important;
     border: none;
-    box-shadow: -12px 0 50px rgba(0,0,0,0.14);
+    box-shadow: -12px 0 50px rgba(0,0,0,0.25);
     transition: margin-right 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
@@ -926,7 +926,7 @@ button {
     justify-content: space-between; 
     align-items: center; 
     position: relative;
-    border-bottom: 1px solid var(--border-color); 
+    border-bottom: 1px solid rgba(255,255,255,0.28); 
     padding-bottom: 1.2rem; 
 }
 
@@ -938,17 +938,14 @@ button {
     width: 52px;
     height: 3px;
     border-radius: 3px;
-    background: var(--gradient);
+    background: #FFFFFF;
 }
 
 .drawer-header h3 {
     font-family: 'Playfair Display', serif;
     font-size: 1.3rem;
     letter-spacing: 1px;
-    background: var(--gradient);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: #FFFFFF;
 }
 
 .modal-close { 
@@ -962,6 +959,10 @@ button {
     opacity: 0.6;
 }
 
+#cartModal .modal-close {
+    color: #FFFFFF;
+}
+
 .drawer-body-scroll { 
     overflow-y: auto; 
     flex-grow: 1; 
@@ -969,11 +970,11 @@ button {
 }
 
 .shipping-progress-container { 
-    background: #FAF6F7; 
-    border-radius: 0px !important; 
+    background: rgba(255,255,255,0.14); 
+    border-radius: 12px !important; 
     padding: 1.2rem; 
     margin-bottom: 1.5rem; 
-    border: 1px solid #F5EAEB; 
+    border: 1px solid rgba(255,255,255,0.3); 
 }
 
 .shipping-progress-text { 
@@ -981,25 +982,27 @@ button {
     font-weight: 600; 
     margin-bottom: 10px; 
     letter-spacing: 0.2px;
+    color: #FFFFFF;
 }
 
 .shipping-progress-text span { 
-    color: var(--primary); 
-    font-weight: 700; 
+    color: #FFFFFF; 
+    font-weight: 800; 
+    text-decoration: underline;
 }
 
 .shipping-bar-bg { 
-    background: #EAEAEA; 
+    background: rgba(255,255,255,0.25); 
     height: 5px; 
-    border-radius: 0px !important; 
+    border-radius: 4px !important; 
     overflow: hidden; 
 }
 
 .shipping-bar-fill { 
     height: 100%; 
-    background: var(--gradient); 
+    background: #FFFFFF; 
     width: 0%; 
-    border-radius: 0px !important;
+    border-radius: 4px !important;
     transition: width 0.5s ease; 
 }
 
@@ -1009,17 +1012,15 @@ button {
     align-items: center; 
     padding: 1.5rem 0; 
     font-weight: 700; 
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid rgba(255,255,255,0.28);
     letter-spacing: 1px;
+    color: #FFFFFF;
 }
 
 .cart-total-wrapper span:last-child {
     font-family: 'Playfair Display', serif;
     font-size: 1.4rem;
-    background: var(--gradient);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: #FFFFFF;
 }
 
 .cart-item-card, 
@@ -1027,11 +1028,12 @@ button {
     display: flex;
     gap: 12px;
     align-items: center;
-    background: var(--bg-main);
+    background: #FFFFFF;
     border-radius: 14px;
     padding: 12px;
     margin-bottom: 10px;
-    border: 1px solid var(--border-color);
+    border: none;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
 }
 
 .cart-item-card img,
@@ -1108,13 +1110,13 @@ button {
 
 #quizModal .modal-content, 
 #favsModal .modal-content { 
-    background: var(--bg-surface); 
+    background: var(--gradient); 
     width: 90%; 
     max-width: 500px; 
     padding: 3rem 2.5rem; 
     border-radius: 24px !important; 
     border: none;
-    box-shadow: 0 25px 70px rgba(0,0,0,0.18);
+    box-shadow: 0 25px 70px rgba(0,0,0,0.3);
     position: relative; 
 }
 
@@ -1124,10 +1126,12 @@ button {
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
     letter-spacing: 1px;
-    background: var(--gradient);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: #FFFFFF;
+}
+
+#quizModal .modal-close,
+#favsModal .modal-close {
+    color: #FFFFFF;
 }
 
 /* Modal de Servicios: le faltaba esta base (fondo, borde, centrado y scroll) */
@@ -1408,23 +1412,27 @@ button {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: var(--text-muted);
+    color: rgba(255,255,255,0.85);
     margin-bottom: 8px;
 }
 
 .quiz-progress-track {
     width: 100%;
     height: 4px;
-    background: var(--border-color);
+    background: rgba(255,255,255,0.28);
     border-radius: 2px;
     overflow: hidden;
 }
 
 .quiz-progress-fill {
     height: 100%;
-    background: var(--gradient);
+    background: #FFFFFF;
     border-radius: 2px;
     transition: width 0.3s ease;
+}
+
+.quiz-title {
+    color: #FFFFFF;
 }
 
 .quiz-results-grid {
@@ -1435,10 +1443,11 @@ button {
 }
 
 .quiz-result-card {
-    background: var(--bg-main);
+    background: #FFFFFF;
     padding: 0.9rem;
     border-radius: 12px;
-    border: 1px solid var(--border-color);
+    border: none;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
     display: flex;
     gap: 12px;
     align-items: center;
@@ -1470,7 +1479,7 @@ button {
 .quiz-back-btn {
     background: none;
     border: none;
-    color: var(--text-muted);
+    color: rgba(255,255,255,0.85);
     font-size: 0.75rem;
     text-decoration: underline;
     cursor: pointer;
