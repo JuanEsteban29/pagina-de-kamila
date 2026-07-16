@@ -22,7 +22,6 @@
                 <a href="#inicio" class="nav-link active">Inicio</a>
                 <a href="#productos" class="nav-link">Productos</a>
                 <a href="#categorias" class="nav-link">Categorías</a>
-                <a href="#testimonios" class="nav-link">Reseñas</a>
                 
                 <div class="services-wrapper" id="servicesWrapper">
                     <button class="nav-services-btn" id="serviciosToggle">
@@ -95,20 +94,64 @@
         </div>
     </header>
     
+    <!-- HERO: Cinematic Split-Screen -->
     <section id="inicio" class="hero">
-        <div class="hero-container">
-            <div class="hero-content">
-                <span class="hero-subtitle">Luxury Glam Collection — 2026</span>
-                <h1 class="hero-title">Resalta la verdadera<br><em>esencia</em> de tu belleza</h1>
-                <p class="hero-text">Cosméticos de alta gama con acabados profesionales, diseñados para empoderar tu estilo y brindarte una fijación impecable de larga duración.</p>
-                <div class="hero-actions">
-                    <a href="#productos" class="btn-gradient">
-                        <span>Explorar la Colección</span>
-                    </a>
+        <!-- Left: Editorial Text Panel -->
+        <div class="hero-left">
+            <span class="hero-eyebrow">✦ Luxury Glam Collection 2026 ✦</span>
+            <h1 class="hero-title">Resalta<br>la verdadera<br><em>esencia</em><br>de tu belleza</h1>
+            <p class="hero-text">Cosméticos de alta gama con acabados profesionales, diseñados para empoderar tu estilo único.</p>
+            <div class="hero-actions">
+                <a href="#productos" class="btn-hero-primary">Descubrir</a>
+                <a href="#categorias" class="btn-hero-outline">Ver Colección</a>
+            </div>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <span class="stat-num">21+</span>
+                    <span class="stat-label">Productos</span>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat">
+                    <span class="stat-num">100%</span>
+                    <span class="stat-label">Premium</span>
+                </div>
+                <div class="hero-stat-divider"></div>
+                <div class="hero-stat">
+                    <span class="stat-num">VZL</span>
+                    <span class="stat-label">Envíos</span>
                 </div>
             </div>
         </div>
+        <!-- Right: Cinematic Image -->
+        <div class="hero-right">
+            <img src="assets/images/kamila.jpeg"
+                 alt="KARA Makeup Model"
+                 class="hero-model-img"
+                 onerror="this.src='https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=800'">
+            <div class="hero-img-badge">
+                <span>NEW</span>
+                <span>DROP</span>
+            </div>
+        </div>
     </section>
+
+    <!-- MARQUEE TICKER -->
+    <div class="marquee-strip">
+        <div class="marquee-track">
+            <span>✦ KARA MAKEUP</span>
+            <span>— Lip Gloss Dolce Bella —</span>
+            <span>✦ Bases Matte Premium</span>
+            <span>— Blush Dolce Bella —</span>
+            <span>✦ Envíos a Todo Venezuela</span>
+            <span>— Vinyl Lasting —</span>
+            <span>✦ KARA MAKEUP</span>
+            <span>— Lip Gloss Dolce Bella —</span>
+            <span>✦ Bases Matte Premium</span>
+            <span>— Blush Dolce Bella —</span>
+            <span>✦ Envíos a Todo Venezuela</span>
+            <span>— Vinyl Lasting —</span>
+        </div>
+    </div>
 
     <section id="categorias" class="categorias-section container">
         <h2 class="section-title gsap-reveal">Líneas de Belleza</h2>
@@ -138,28 +181,6 @@
         </div>
     </section>
 
-    <section id="testimonios" class="testimonios-section">
-        <div class="container">
-            <h2 class="section-title gsap-reveal">Experiencias KARA</h2>
-            <div class="testimonials-grid">
-                <div class="testimonial-card">
-                    <span class="testimonial-stars">★★★★★</span>
-                    <p class="testimonial-text">"El iluminador Velvet Glow me dejó un acabado radiante y sofisticado todo el día. Estoy completamente enamorada de la pigmentación y la elegancia del empaque."</p>
-                    <h4 class="testimonial-author">María Camila V.</h4>
-                </div>
-                <div class="testimonial-card">
-                    <span class="testimonial-stars">★★★★★</span>
-                    <p class="testimonial-text">"Los labiales mate tienen una pigmentación increíble y se sienten súper hidratantes en los labios. El empaque y el despacho a domicilio fueron impecables."</p>
-                    <h4 class="testimonial-author">Valeria D.</h4>
-                </div>
-                <div class="testimonial-card">
-                    <span class="testimonial-stars">★★★★★</span>
-                    <p class="testimonial-text">"Los productos de KARA son de una calidad que no esperaba encontrar a ese precio. El blush se ve increíble y la atención fue muy personalizada."</p>
-                    <h4 class="testimonial-author">Daniela M.</h4>
-                </div>
-            </div>
-        </div>
-    </section>
 
     <footer class="main-footer">
         <div class="container footer-grid">

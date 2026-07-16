@@ -369,66 +369,7 @@ button {
     background-color: #FFFFFF; 
 }
 
-/* ==========================================================================
-   HERO (Cinematic Split/Overlay)
-   ========================================================================== */
-.hero {
-    position: relative;
-    min-height: 85vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding-top: 80px;
-    color: white;
-    background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)), url('https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=1600') center/cover no-repeat !important;
-    text-align: center;
-}
 
-.hero-container { 
-    width: 100%; 
-    max-width: 1200px; 
-    margin: 0 auto; 
-    padding: 0 2rem; 
-}
-
-.hero-content { 
-    max-width: 800px; 
-    margin: 0 auto;
-    background: rgba(0, 0, 0, 0.45);
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    padding: 4rem 3rem !important;
-    border-radius: 0px !important;
-}
-
-.hero-subtitle {
-    font-size: 0.85rem !important; 
-    text-transform: uppercase; 
-    letter-spacing: 4px !important; 
-    margin-bottom: 1.5rem !important;
-    display: inline-block; 
-    font-weight: 600; 
-    color: #FFFFFF !important;
-    border-bottom: 1px solid #FFFFFF;
-    padding-bottom: 0.5rem;
-}
-
-.hero-title { 
-    font-size: 3.8rem !important; 
-    font-weight: 300 !important; 
-    line-height: 1.15; 
-    margin-bottom: 1.5rem; 
-    font-family: 'Cormorant Garamond', serif !important; 
-    letter-spacing: 1px;
-}
-
-.hero-text { 
-    font-size: 1rem !important; 
-    line-height: 1.8; 
-    margin-bottom: 2.5rem; 
-    letter-spacing: 0.5px;
-    color: rgba(255,255,255,0.85) !important;
-}
 
 .btn-gradient {
     display: inline-flex; 
@@ -1056,16 +997,273 @@ button {
         justify-content: center; 
         font-size: 0.9rem !important;
     }
-    
-    .hero-title { 
-        font-size: 2.8rem !important; 
+    .container { padding: 4rem 1.5rem; }
+}
+
+/* ==========================================================================
+   HERO — CINEMATIC SPLIT-SCREEN
+   ========================================================================== */
+.hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 100vh;
+    padding-top: 72px;
+    background: #0a0a0a;
+    overflow: hidden;
+}
+
+.hero-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 5rem 4rem 5rem 5rem;
+    background: linear-gradient(135deg, #C51F51 0%, #E9AE52 100%);
+    position: relative;
+    z-index: 2;
+}
+
+.hero-left::after {
+    content: '';
+    position: absolute;
+    right: -40px;
+    top: 0;
+    width: 80px;
+    height: 100%;
+    background: linear-gradient(135deg, #C51F51 0%, #E9AE52 100%);
+    clip-path: polygon(0 0, 0% 100%, 100% 100%);
+    z-index: 3;
+}
+
+.hero-eyebrow {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    color: rgba(255,255,255,0.75);
+    font-weight: 600;
+    margin-bottom: 2rem;
+    display: block;
+}
+
+.hero-title {
+    font-family: 'Cormorant Garamond', serif !important;
+    font-size: 4.5rem !important;
+    font-weight: 300 !important;
+    line-height: 1.05 !important;
+    color: #FFFFFF;
+    margin-bottom: 1.8rem;
+    letter-spacing: 0px;
+}
+
+.hero-title em {
+    font-style: italic;
+    font-weight: 400;
+    color: rgba(255,255,255,0.9);
+}
+
+.hero-text {
+    font-size: 0.92rem;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 2.5rem;
+    max-width: 380px;
+    letter-spacing: 0.3px;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 3rem;
+}
+
+.btn-hero-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #FFFFFF;
+    color: #000000;
+    font-weight: 700;
+    padding: 1rem 2.2rem;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    border: 2px solid #FFFFFF;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn-hero-primary:hover {
+    background: transparent;
+    color: #FFFFFF;
+}
+
+.btn-hero-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: #FFFFFF;
+    font-weight: 700;
+    padding: 1rem 2.2rem;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    border: 2px solid rgba(255,255,255,0.6);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn-hero-outline:hover {
+    border-color: #FFFFFF;
+    background: rgba(255,255,255,0.1);
+}
+
+.hero-stats {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255,255,255,0.2);
+}
+
+.hero-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.65);
+    font-weight: 600;
+}
+
+.hero-stat-divider {
+    width: 1px;
+    height: 36px;
+    background: rgba(255,255,255,0.25);
+}
+
+/* Right side — full-bleed photo */
+.hero-right {
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-model-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+    filter: brightness(0.92) contrast(1.05);
+    transition: transform 8s ease;
+}
+
+.hero-right:hover .hero-model-img {
+    transform: scale(1.04);
+}
+
+.hero-img-badge {
+    position: absolute;
+    top: 2rem;
+    left: 2rem;
+    background: var(--gradient);
+    color: #FFFFFF;
+    padding: 0.6rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.1;
+}
+
+.hero-img-badge span:first-child {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+.hero-img-badge span:last-child {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    font-style: italic;
+    font-weight: 400;
+}
+
+/* ==========================================================================
+   MARQUEE TICKER
+   ========================================================================== */
+.marquee-strip {
+    background: #000000;
+    padding: 0.9rem 0;
+    overflow: hidden;
+    white-space: nowrap;
+    border-top: 1px solid #1a1a1a;
+}
+
+.marquee-track {
+    display: inline-flex;
+    gap: 3rem;
+    animation: marqueeScroll 22s linear infinite;
+    will-change: transform;
+}
+
+.marquee-track span {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: #FFFFFF;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.marquee-track span:nth-child(even) {
+    color: var(--gold-glow);
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    font-weight: 400;
+}
+
+@keyframes marqueeScroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* ==========================================================================
+   RESPONSIVE — HERO SPLIT
+   ========================================================================== */
+@media (max-width: 992px) {
+    .hero {
+        grid-template-columns: 1fr;
+        min-height: auto;
     }
-    
-    .hero-content {
-        padding: 3rem 1.5rem !important;
+    .hero-left {
+        padding: 5rem 2rem 4rem 2rem;
+        order: 2;
     }
-    
-    .container {
-        padding: 4rem 1.5rem;
+    .hero-left::after { display: none; }
+    .hero-right {
+        order: 1;
+        height: 55vw;
+        min-height: 320px;
+        max-height: 500px;
     }
+    .hero-title { font-size: 3rem !important; }
+    .hero-img-badge { top: 1rem; left: 1rem; }
+    .container { padding: 4rem 1.5rem; }
 }
