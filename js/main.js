@@ -700,25 +700,23 @@ function actualizarVistaCarrito() {
     }
 
     carrito.forEach((item, index) => {
-        const txtTono = item.selectedTone ? `<span style="font-size:0.75rem; display:block; color:#777;">Tono: ${item.selectedTone}</span>` : "";
+        const txtTono = item.selectedTone ? `<span style="font-size:0.72rem; display:block; color:#777;">Tono: ${item.selectedTone}</span>` : "";
         const row = document.createElement("div"); //[cite: 6]
-        row.className = "cart-item-row"; //[cite: 6]
-        row.style.cssText = "display:flex;flex-direction:column;gap:6px;padding:14px 0;border-bottom:1px solid var(--border-color);"; //[cite: 6]
+        row.className = "cart-item-card"; //[cite: 6]
         row.innerHTML = `
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div style="display:flex; flex-direction:column;">
-                    <span style="font-weight:600;font-size:0.88rem;">🥥 ${item.title}</span>
-                    ${txtTono}
+            <img src="${item.img}" onerror="this.src='https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=100'">
+            <div class="cart-item-info">
+                <h5>${item.title}</h5>
+                ${txtTono}
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <button class="qty-btn btn-qty-minus" data-index="${index}">-</button>
+                        <span style="font-size:0.85rem;font-weight:600;min-width:16px;text-align:center;">${item.cantidad}</span>
+                        <button class="qty-btn btn-qty-plus" data-index="${index}">+</button>
+                    </div>
+                    <strong class="cart-item-price">$${(item.price * item.cantidad).toFixed(2)}</strong>
                 </div>
-                <strong style="color:var(--primary);font-size:0.9rem;">$${(item.price * item.cantidad).toFixed(2)}</strong>
-            </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-                <div style="display:flex;align-items:center;gap:8px;">
-                    <button class="btn-qty-minus" data-index="${index}" style="background:#f0f0f0;border:none;width:24px;height:24px;border-radius:4px;font-weight:bold;cursor:pointer;">-</button>
-                    <span style="font-size:0.85rem;font-weight:600;min-width:16px;text-align:center;">${item.cantidad}</span>
-                    <button class="btn-qty-plus" data-index="${index}" style="background:#f0f0f0;border:none;width:24px;height:24px;border-radius:4px;font-weight:bold;cursor:pointer;">+</button>
-                </div>
-                <button class="btn-remove-item" data-index="${index}" style="font-size:0.75rem;color:#FF3B30;background:none;border:none;text-decoration:underline;cursor:pointer;">Quitar</button>
+                <button class="btn-remove-item" data-index="${index}" style="margin-top:4px;">Quitar</button>
             </div>`; //[cite: 6]
         body.appendChild(row); //[cite: 6]
     });
@@ -772,8 +770,13 @@ function actualizarVistaFavoritos() {
     }
     listaFavs.forEach(item => {
         const row = document.createElement("div"); //[cite: 6]
-        row.className = "cart-item-row"; //[cite: 6]
-        row.innerHTML = `<span>💖 ${item.title}</span><strong style="color:var(--primary);">$${item.price.toFixed(2)}</strong>`; //[cite: 6]
+        row.className = "fav-item-card"; //[cite: 6]
+        row.innerHTML = `
+            <img src="${item.img}" onerror="this.src='https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=100'">
+            <div class="fav-item-info">
+                <h5>💖 ${item.title}</h5>
+                <span class="fav-item-price">$${item.price.toFixed(2)}</span>
+            </div>`; //[cite: 6]
         body.appendChild(row); //[cite: 6]
     });
 }
