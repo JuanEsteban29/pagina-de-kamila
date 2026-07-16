@@ -182,6 +182,60 @@ button {
     margin-left: 2px;
 }
 
+/* SERVICIOS: intro personal de la maquilladora */
+.artist-intro {
+    text-align: center;
+    padding-bottom: 1.4rem;
+    margin-bottom: 1.2rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.artist-badge {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto 0.8rem;
+    border-radius: 50%;
+    background: var(--gradient);
+    color: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+.artist-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    margin-bottom: 0.3rem;
+}
+
+.artist-tagline {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 1.1rem;
+}
+
+.artist-instagram-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--gradient);
+    color: #FFFFFF;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.65rem 1.2rem;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+.artist-instagram-pill:hover {
+    opacity: 0.85;
+}
+
 /* SERVICIOS: tarjetas dentro del modal (ver #servicesModal) */
 .services-grid {
     display: grid;
