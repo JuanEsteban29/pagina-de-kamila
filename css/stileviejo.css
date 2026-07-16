@@ -15,8 +15,6 @@
     --glass-bg: rgba(255, 255, 255, 0.85);
     --glass-border: rgba(255, 255, 255, 0.2);
     --gold-glow: #E9AE52;
-    --announce-h: 38px;
-    --header-h: 72px;
 }
 
 /* ==========================================================================
@@ -63,42 +61,13 @@ button {
 }
 
 /* ==========================================================================
-   BARRA DE ANUNCIO (estilo Huda Beauty)
-   ========================================================================== */
-.announcement-bar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: var(--announce-h);
-    background: #000000;
-    color: #FFFFFF;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1002;
-    padding: 0 1rem;
-}
-
-.announcement-bar p {
-    font-size: 0.68rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* ==========================================================================
    HEADER (Translucent & Minimalist)
    ========================================================================== */
 .main-header {
     background: linear-gradient(90deg, #C51F51 0%, #E9AE52 100%) !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
     position: fixed;
-    top: var(--announce-h);
+    top: 0; 
     left: 0;
     width: 100%;
     z-index: 1000;
@@ -647,54 +616,6 @@ button {
     color: var(--primary) !important; 
 }
 
-/* Badge de urgencia (stock real, no inventado) */
-.product-badge {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    background: var(--gradient);
-    color: #FFFFFF;
-    font-size: 0.6rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 0.4rem 0.7rem;
-    z-index: 5;
-}
-
-/* Swatches de tono estilo Huda Beauty */
-.product-tones {
-    margin-bottom: 1rem;
-}
-
-.tone-dots {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-
-.tone-dot {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12), 0 0 0 2.5px #FFFFFF;
-    cursor: default;
-    transition: transform 0.2s ease;
-}
-
-.tone-dot:hover {
-    transform: scale(1.25);
-}
-
-.tone-more {
-    font-size: 0.68rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    margin-left: 4px;
-}
-
 .load-more-container { 
     text-align: center; 
     margin-top: 3.5rem; 
@@ -1053,10 +974,10 @@ button {
     
     .nav-menu {
         position: fixed; 
-        top: calc(var(--header-h) + var(--announce-h)); 
+        top: 72px; 
         left: -100%; 
         width: 100%; 
-        height: calc(100vh - var(--header-h) - var(--announce-h));
+        height: calc(100vh - 72px);
         background: #000000; 
         flex-direction: column; 
         align-items: center; 
@@ -1086,7 +1007,7 @@ button {
     display: grid;
     grid-template-columns: 1fr 1fr;
     min-height: 100vh;
-    padding-top: calc(var(--header-h) + var(--announce-h));
+    padding-top: 72px;
     background: #0a0a0a;
     overflow: hidden;
 }

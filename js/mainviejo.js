@@ -279,19 +279,6 @@ function migrarProductosAdminLegacy() {
 // ==========================================
 // 2. RENDERIZADO DINÁMICO DE PRODUCTOS
 // ==========================================
-
-// Genera un color determinístico (siempre el mismo para el mismo texto) a partir
-// del nombre del tono, para mostrarlo como swatch. No es el color real del producto,
-// es solo una guía visual para diferenciar tonos de un vistazo, estilo Huda Beauty.
-function toneToColor(name) {
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-        hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const hue = Math.abs(hash) % 360;
-    return `hsl(${hue}, 55%, 68%)`;
-}
-
 function renderProductos(filtrados = null) {
     const grid = document.getElementById("productsGrid");
     if (!grid) return;
@@ -312,27 +299,13 @@ function renderProductos(filtrados = null) {
         card.className = "product-card";
         card.style.setProperty('--card-index', i);
 
-        let htmlTonos = '';
-        if (prod.tones) {
-            const toneList = prod.tones.split(',').map(t => t.trim()).filter(Boolean);
-            const maxDots = 6;
-            const dotsHtml = toneList.slice(0, maxDots).map(t =>
-                `<span class="tone-dot" style="background:${toneToColor(t)}" title="${t}"></span>`
-            ).join('');
-            const extra = toneList.length > maxDots
-                ? `<span class="tone-more">+${toneList.length - maxDots}</span>`
-                : '';
-            htmlTonos = `<div class="product-tones"><div class="tone-dots">${dotsHtml}${extra}</div></div>`;
-        }
-
-        const htmlBadge = (typeof prod.stock === 'number' && prod.stock > 0 && prod.stock <= 2)
-            ? `<span class="product-badge">¡Últimas unidades!</span>`
+        const htmlTonos = prod.tones 
+            ? `<div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:8px; line-height:1.2;"><strong>Tonos:</strong> ${prod.tones}</div>` 
             : '';
 
         card.innerHTML = `
             <div class="product-image-container">
                 <img src="${prod.img}" alt="${prod.title}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400'">
-                ${htmlBadge}
                 <button class="fav-card-btn ${isFav ? 'active' : ''}" data-id="${prod.id}" aria-label="Favorito">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
                          fill="${isFav ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
