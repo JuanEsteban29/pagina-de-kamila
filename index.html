@@ -256,31 +256,50 @@
                 </a>
             </div>
 
-            <h3>Elige tu Look</h3>
-            <div class="services-grid">
-                <div class="service-card">
-                    <div class="service-img-wrap">
-                        <img src="assets/images/LIP GLOSS.jpeg" alt="Maquillaje de Día" onerror="this.src='https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=400'">
-                        <span class="service-tag">☀️ Día</span>
+            <div class="booking-composer">
+                <p class="composer-step-label">01 · ¿Para qué ocasión?</p>
+                <div class="occasion-chips" id="occasionChips">
+                    <button type="button" class="occasion-chip" data-occasion="una Boda">Boda</button>
+                    <button type="button" class="occasion-chip" data-occasion="una Fiesta">Fiesta</button>
+                    <button type="button" class="occasion-chip" data-occasion="una Sesión de Fotos">Sesión de fotos</button>
+                    <button type="button" class="occasion-chip" data-occasion="Uso Personal">Uso personal</button>
+                    <button type="button" class="occasion-chip" data-occasion="otra ocasión">Otro</button>
+                </div>
+
+                <p class="composer-step-label">02 · Elige tu look</p>
+                <div class="services-grid" id="lookCards">
+                    <div class="service-card" data-look="Maquillaje de Día (Sunset Glow)" tabindex="0" role="button">
+                        <div class="service-img-wrap">
+                            <img src="assets/images/LIP GLOSS.jpeg" alt="Maquillaje de Día" onerror="this.src='https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&q=80&w=400'">
+                            <span class="service-tag">☀️ Día</span>
+                        </div>
+                        <div class="service-body">
+                            <h4>Maquillaje de Día</h4>
+                            <p>Acabado fresco, luminoso y natural (Soft Glow). Ideal para eventos diurnos o sesiones de fotos.</p>
+                        </div>
                     </div>
-                    <div class="service-body">
-                        <h4>Maquillaje de Día</h4>
-                        <p>Te maquillo con un acabado fresco, luminoso y natural (Soft Glow). Ideal para eventos diurnos, reuniones o sesiones de fotos.</p>
-                        <button class="btn-reserva-servicio compact-btn" data-service="dia">Reservar este Look</button>
+                    <div class="service-card" data-look="Maquillaje de Noche (Glam Night)" tabindex="0" role="button">
+                        <div class="service-img-wrap">
+                            <img src="assets/images/vinyl.jpeg" alt="Maquillaje de Noche" onerror="this.src='https://images.unsplash.com/photo-1493421419110-74f4e85ba124?auto=format&fit=crop&q=80&w=400'">
+                            <span class="service-tag">🌙 Noche</span>
+                        </div>
+                        <div class="service-body">
+                            <h4>Maquillaje de Noche</h4>
+                            <p>Mirada de impacto y contornos definidos de alta duración (Glam Night), lista para toda la fiesta.</p>
+                        </div>
                     </div>
                 </div>
-                <div class="service-card">
-                    <div class="service-img-wrap">
-                        <img src="assets/images/vinyl.jpeg" alt="Maquillaje de Noche" onerror="this.src='https://images.unsplash.com/photo-1493421419110-74f4e85ba124?auto=format&fit=crop&q=80&w=400'">
-                        <span class="service-tag">🌙 Noche</span>
-                    </div>
-                    <div class="service-body">
-                        <h4>Maquillaje de Noche</h4>
-                        <p>Te maquillo con una mirada de impacto y contornos definidos de alta duración (Glam Night), lista para toda la fiesta.</p>
-                        <button class="btn-reserva-servicio compact-btn" data-service="noche">Reservar este Look</button>
-                    </div>
+
+                <p class="composer-step-label">03 · Tu mensaje para Kamila</p>
+                <div class="composer-preview" id="composerPreview">
+                    Selecciona una ocasión y un look arriba para ver aquí tu mensaje...
                 </div>
+
+                <button type="button" class="btn-composer-send" id="btnEnviarWhatsapp" disabled>
+                    Enviar por WhatsApp
+                </button>
             </div>
+
             <div class="services-extra">
                 <button class="dropdown-item-link" id="btnAbrirEncuesta">
                     <span>📋</span> Shade Finder Quiz

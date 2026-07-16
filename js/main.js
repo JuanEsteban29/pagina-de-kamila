@@ -523,33 +523,63 @@ function setupCartPanelEvents() {
 }
 
 // ==========================================
-// 5. MODAL DE SERVICIOS
+// 5. MODAL DE SERVICIOS + COMPOSITOR DE RESERVA
 // ==========================================
 function setupServicesDropdown() {
     const servicesModal = document.getElementById("servicesModal");
     setupModalEvents("serviciosToggle", "servicesModal", "closeServices");
 
-    document.querySelectorAll(".btn-reserva-servicio").forEach(btn => {
-        btn.addEventListener("click", (e) => {
-            e.preventDefault();
-            const modelo = btn.getAttribute("data-service");
-            const nombre = modelo === "dia"
-                ? "Maquillaje de Día (Sunset Glow)"
-                : "Maquillaje de Noche (Tropical Night)";
-            const msg = `¡Hola KARA! 🌴 Me encantaría reservar una cita para el estilo de *${nombre}*. ¿Cuáles son tus próximas fechas disponibles?`;
-            const textoOriginal = btn.textContent;
-            btn.textContent = "Abriendo... 🌴";
-            btn.style.backgroundColor = "#25D366";
-            btn.style.color = "#ffffff";
-            window.open("https://wa.me/584122665492?text=" + encodeURIComponent(msg), "_blank");
-            setTimeout(() => {
-                btn.textContent = textoOriginal;
-                btn.style.backgroundColor = "";
-                btn.style.color = "";
-                if (servicesModal) servicesModal.style.display = "none";
-            }, 1000);
+    let selectedOccasion = null;
+    let selectedLook = null;
+
+    const occasionChips = document.querySelectorAll("#occasionChips .occasion-chip");
+    const lookCards = document.querySelectorAll("#lookCards .service-card");
+    const preview = document.getElementById("composerPreview");
+    const btnSend = document.getElementById("btnEnviarWhatsapp");
+
+    function actualizarVistaPreviaMensaje() {
+        if (!preview || !btnSend) return;
+        if (selectedOccasion && selectedLook) {
+            preview.textContent = `¡Hola Kamila! 🌴 Quiero agendar un ${selectedLook} para ${selectedOccasion}. ¿Cuáles son tus próximas fechas disponibles?`;
+            btnSend.disabled = false;
+        } else {
+            preview.textContent = "Selecciona una ocasión y un look arriba para ver aquí tu mensaje...";
+            btnSend.disabled = true;
+        }
+    }
+
+    occasionChips.forEach(chip => {
+        chip.addEventListener("click", () => {
+            occasionChips.forEach(c => c.classList.remove("active"));
+            chip.classList.add("active");
+            selectedOccasion = chip.dataset.occasion;
+            actualizarVistaPreviaMensaje();
         });
     });
+
+    lookCards.forEach(card => {
+        const seleccionar = () => {
+            lookCards.forEach(c => c.classList.remove("selected"));
+            card.classList.add("selected");
+            selectedLook = card.dataset.look;
+            actualizarVistaPreviaMensaje();
+        };
+        card.addEventListener("click", seleccionar);
+        card.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                seleccionar();
+            }
+        });
+    });
+
+    if (btnSend) {
+        btnSend.addEventListener("click", () => {
+            if (!selectedOccasion || !selectedLook || !preview) return;
+            window.open("https://wa.me/584122665492?text=" + encodeURIComponent(preview.textContent), "_blank");
+            if (servicesModal) servicesModal.style.display = "none";
+        });
+    }
 
     const btnAgendar = document.getElementById("btnAgendarMaquilladora");
     if (btnAgendar) {
