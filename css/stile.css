@@ -1781,9 +1781,15 @@ button {
     .hero-left::after { display: none; }
     .hero-right {
         order: 1;
-        height: 55vw;
+        height: 78vw;
         min-height: 320px;
-        max-height: 500px;
+        max-height: 480px;
+        background: linear-gradient(135deg, #C51F51 0%, #E9AE52 100%);
+    }
+    .hero-model-img {
+        object-fit: contain;
+        object-position: center center;
+        padding: 1rem;
     }
     .hero-title { font-size: 3rem !important; }
     .hero-img-badge { top: 1rem; left: 1rem; }
