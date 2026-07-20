@@ -13,66 +13,25 @@ let localDeletedIds = JSON.parse(localStorage.getItem('KARA_ADMIN_DELETED')) || 
 let serverSyncActive = false;
 let tfModel = null;
 let currentUploadedImageBase64 = "";
+let currentSecondUploadedImageBase64 = "";
 
 document.addEventListener("DOMContentLoaded", () => {
     initAdmin();
 });
 
-function initAdmin() {
-    setupPassGate();
+async function initAdmin() {
     setupImageUpload();
     setupProductForm();
-    setupSyncMode();
+    await setupSyncMode();
     loadAIModel();
-    loadCatalog();
+    await loadCatalog();
 }
 
 // ==========================================
 // 1. CONTROL DE ACCESO (PASS GATE)
 // ==========================================
 function setupPassGate() {
-    const loginForm = document.getElementById("loginForm");
-    const loginScreen = document.getElementById("loginScreen");
-    const adminPass = document.getElementById("adminPass");
-    const loginError = document.getElementById("loginError");
-    const btnLogout = document.getElementById("btnLogout");
-
-    if (!loginForm || !loginScreen) return;
-
-    // Abrir panel directamente
-    function desbloquearPanel() {
-        sessionStorage.setItem("KARA_ADMIN_LOGGED", "true");
-        if (loginError) loginError.style.display = "none";
-        if (window.gsap) {
-            gsap.to(loginScreen, {
-                opacity: 0,
-                scale: 0.95,
-                duration: 0.3,
-                onComplete: () => {
-                    loginScreen.style.display = "none";
-                }
-            });
-        } else {
-            loginScreen.style.display = "none";
-        }
-    }
-
-    // Verificar si ya inició sesión previamente
-    if (sessionStorage.getItem("KARA_ADMIN_LOGGED") === "true") {
-        loginScreen.style.display = "none";
-    }
-
-    loginForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        desbloquearPanel();
-    });
-
-    if (btnLogout) {
-        btnLogout.addEventListener("click", () => {
-            sessionStorage.removeItem("KARA_ADMIN_LOGGED");
-            location.reload();
-        });
-    }
+    // Pantalla de login removida para acceso directo
 }
 
 // ==========================================
@@ -84,24 +43,27 @@ async function setupSyncMode() {
     const exportBtn = document.getElementById("btnExportJSON");
 
     try {
-        // Hacemos una petición rápida para ver si el servidor responde
         const res = await fetch("/api/ping");
         if (res.ok) {
             serverSyncActive = true;
-            modeText.textContent = "Conexión local: SERVIDOR ACTIVO 🚀";
-            modeText.parentElement.style.backgroundColor = "#F2FFF5";
-            modeText.parentElement.style.borderColor = "rgba(37, 211, 102, 0.2)";
-            modeText.parentElement.style.color = "#1E6B34";
-            descText.textContent = "Los cambios se guardan automáticamente en js/productos.json en tiempo real.";
-            exportBtn.style.display = "none";
+            if (modeText) {
+                modeText.textContent = "Conexión local: SERVIDOR ACTIVO 🚀";
+                if (modeText.parentElement) {
+                    modeText.parentElement.style.backgroundColor = "#F2FFF5";
+                    modeText.parentElement.style.borderColor = "rgba(37, 211, 102, 0.2)";
+                    modeText.parentElement.style.color = "#1E6B34";
+                }
+            }
+            if (descText) descText.textContent = "Los cambios se guardan automáticamente en js/productos.json en tiempo real.";
+            if (exportBtn) exportBtn.style.display = "none";
         } else {
             throw new Error("No server endpoint");
         }
     } catch (e) {
         serverSyncActive = false;
-        modeText.textContent = "Conexión local: MODO HOSTING ESTÁTICO 🥥";
-        descText.textContent = "Los cambios se guardan localmente. Presiona 'Exportar JSON' y guárdalo en tu carpeta js/ para que sea permanente.";
-        exportBtn.style.display = "inline-flex";
+        if (modeText) modeText.textContent = "Conexión local: MODO HOSTING ESTÁTICO 🥥";
+        if (descText) descText.textContent = "Los cambios se guardan localmente en tu navegador.";
+        if (exportBtn) exportBtn.style.display = "inline-flex";
     }
 
     if (exportBtn) {
@@ -151,10 +113,6 @@ function showAIStatus(msg, type = "info") {
 }
 
 // ==========================================
-let currentUploadedImageBase64 = "";
-let currentSecondUploadedImageBase64 = "";
-
-// ==========================================
 // 4. CARGA DE IMÁGENES Y ANÁLISIS IA
 // ==========================================
 function setupImageUpload() {
@@ -165,8 +123,7 @@ function setupImageUpload() {
     const imagePreview = document.getElementById("imagePreview");
     const btnRemove = document.getElementById("btnRemovePreview");
     const uploadPrompt = document.getElementById("uploadPrompt");
-    const scanOverlay = document.getElementById("scanOverlay");
-    const scanLine = document.getElementById("scanLine");
+    const btnPickMain = document.getElementById("btnPickMainImage");
 
     // Segunda Foto
     const uploadAreaSecond = document.getElementById("uploadAreaSecond");
@@ -175,14 +132,22 @@ function setupImageUpload() {
     const imagePreviewSecond = document.getElementById("imagePreviewSecond");
     const btnRemoveSecond = document.getElementById("btnRemovePreviewSecond");
     const uploadPromptSecond = document.getElementById("uploadPromptSecond");
+    const btnPickSecond = document.getElementById("btnPickSecondImage");
 
     // EVENTOS FOTO PRINCIPAL
     if (uploadArea && fileInput) {
-        uploadArea.addEventListener("click", () => {
-            if (previewContainer.style.display !== "flex") {
+        uploadArea.addEventListener("click", (e) => {
+            if (e.target !== btnRemove && !btnRemove?.contains(e.target)) {
                 fileInput.click();
             }
         });
+
+        if (btnPickMain) {
+            btnPickMain.addEventListener("click", (e) => {
+                e.stopPropagation();
+                fileInput.click();
+            });
+        }
 
         uploadArea.addEventListener("dragover", (e) => {
             e.preventDefault();
@@ -215,14 +180,15 @@ function setupImageUpload() {
                 imagePreview.src = "";
                 currentUploadedImageBase64 = "";
                 uploadPrompt.style.display = "block";
+                if (btnPickMain) btnPickMain.style.display = "inline-block";
                 showAIStatus("Foto principal removida.", "info");
             });
         }
     }
 
     function procesarImagenPrincipal(file) {
-        if (!file.type.startsWith("image/")) {
-            alert("Por favor, sube una imagen válida.");
+        if (!file || !file.type.startsWith("image/")) {
+            alert("Por favor, selecciona un archivo de imagen válido (JPEG, PNG, WEBP).");
             return;
         }
 
@@ -232,6 +198,7 @@ function setupImageUpload() {
             imagePreview.src = currentUploadedImageBase64;
             previewContainer.style.display = "flex";
             uploadPrompt.style.display = "none";
+            if (btnPickMain) btnPickMain.style.display = "none";
 
             // Lanzar animación de escaneo e IA
             ejecutarAnalisisIA(file.name);
@@ -241,11 +208,18 @@ function setupImageUpload() {
 
     // EVENTOS SEGUNDA FOTO
     if (uploadAreaSecond && fileInputSecond) {
-        uploadAreaSecond.addEventListener("click", () => {
-            if (previewContainerSecond.style.display !== "flex") {
+        uploadAreaSecond.addEventListener("click", (e) => {
+            if (e.target !== btnRemoveSecond && !btnRemoveSecond?.contains(e.target)) {
                 fileInputSecond.click();
             }
         });
+
+        if (btnPickSecond) {
+            btnPickSecond.addEventListener("click", (e) => {
+                e.stopPropagation();
+                fileInputSecond.click();
+            });
+        }
 
         uploadAreaSecond.addEventListener("dragover", (e) => {
             e.preventDefault();
@@ -278,13 +252,14 @@ function setupImageUpload() {
                 imagePreviewSecond.src = "";
                 currentSecondUploadedImageBase64 = "";
                 uploadPromptSecond.style.display = "block";
+                if (btnPickSecond) btnPickSecond.style.display = "inline-block";
             });
         }
     }
 
     function procesarSegundaImagen(file) {
-        if (!file.type.startsWith("image/")) {
-            alert("Por favor, sube una imagen válida para la segunda foto.");
+        if (!file || !file.type.startsWith("image/")) {
+            alert("Por favor, selecciona una imagen válida para la segunda foto.");
             return;
         }
 
@@ -294,6 +269,7 @@ function setupImageUpload() {
             imagePreviewSecond.src = currentSecondUploadedImageBase64;
             previewContainerSecond.style.display = "flex";
             uploadPromptSecond.style.display = "none";
+            if (btnPickSecond) btnPickSecond.style.display = "none";
         };
         reader.readAsDataURL(file);
     }

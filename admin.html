@@ -1005,7 +1005,7 @@
                     </div>
 
                     <div class="scanner-pod-wrap">
-                        <div class="upload-area" id="uploadArea">
+                        <div class="upload-area" id="uploadArea" style="cursor: pointer;">
                             <div class="upload-preview-container" id="previewContainer">
                                 <img src="" alt="Vista previa principal" class="upload-preview" id="imagePreview">
                                 <button type="button" class="remove-preview-btn" id="btnRemovePreview" aria-label="Remover foto principal">&times;</button>
@@ -1014,7 +1014,8 @@
                                 <div class="scan-line" id="scanLine"></div>
                             </div>
                             <span class="upload-icon">📸</span>
-                            <p class="upload-text" id="uploadPrompt">Arrastra la <strong>Foto Principal</strong> aquí o <span>haz clic para buscar</span></p>
+                            <p class="upload-text" id="uploadPrompt">Arrastra la <strong>Foto Principal</strong> aquí o</p>
+                            <button type="button" class="btn-action" id="btnPickMainImage" style="width: auto; margin-top: 0.5rem; padding: 0.5rem 1rem; font-size: 0.8rem; background: var(--primary); color: #fff; border-radius: 20px;">📁 Elegir Foto Principal</button>
                             <input type="file" id="prodImageFile" accept="image/*" style="display: none;">
                         </div>
                     </div>
@@ -1023,13 +1024,14 @@
 
                     <!-- Segunda Foto (Carga directa por archivo/clic) -->
                     <span class="step-badge" style="margin-top: 0.5rem;">01b · Segunda Foto (Hover / Ángulo)</span>
-                    <div class="upload-area upload-area-second" id="uploadAreaSecond" style="min-height: 120px; padding: 1.2rem 1rem;">
+                    <div class="upload-area upload-area-second" id="uploadAreaSecond" style="min-height: 120px; padding: 1.2rem 1rem; cursor: pointer;">
                         <div class="upload-preview-container" id="previewContainerSecond">
                             <img src="" alt="Vista previa 2da foto" class="upload-preview" id="imagePreviewSecond">
                             <button type="button" class="remove-preview-btn" id="btnRemovePreviewSecond" aria-label="Remover 2da foto">&times;</button>
                         </div>
                         <span class="upload-icon" style="font-size: 1.6rem; margin-bottom: 0.4rem;">🖼️</span>
-                        <p class="upload-text" id="uploadPromptSecond" style="font-size: 0.8rem;">Arrastra la <strong>2da Foto</strong> aquí o <span>haz clic para seleccionar</span></p>
+                        <p class="upload-text" id="uploadPromptSecond" style="font-size: 0.8rem;">Arrastra la <strong>2da Foto</strong> aquí o</p>
+                        <button type="button" class="btn-action" id="btnPickSecondImage" style="width: auto; margin-top: 0.5rem; padding: 0.4rem 0.9rem; font-size: 0.75rem; background: #EAEAEA; color: #333; border-radius: 20px;">🖼️ Elegir 2da Foto</button>
                         <input type="file" id="prodSecondImageFile" accept="image/*" style="display: none;">
                     </div>
                 </div>
