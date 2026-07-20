@@ -343,27 +343,30 @@
         .admin-intro {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 2.6rem 2rem 1.4rem;
+            padding: 2.2rem 2rem 0.6rem 2rem;
+            position: relative;
+            z-index: 10;
         }
 
         .admin-eyebrow {
-            font-size: 0.72rem;
+            font-size: 0.75rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--gold-deep);
-            margin-bottom: 0.5rem;
+            letter-spacing: 2.5px;
+            color: var(--primary);
+            margin-bottom: 0.4rem;
+            display: block;
         }
 
         .admin-title {
             font-family: 'Bodoni Moda', serif;
-            font-size: 2rem;
-            font-weight: 700;
+            font-size: 2.3rem;
+            font-weight: 800;
             color: var(--text-main);
-        }
-
-        .admin-title span {
-            color: var(--gold);
+            letter-spacing: 0.5px;
+            line-height: 1.2;
+            filter: none !important;
+            opacity: 1 !important;
         }
 
         .admin-container {
@@ -1032,6 +1035,7 @@
 
     <!-- Bienvenida -->
     <div class="admin-intro">
+        <span class="admin-eyebrow">✦ Panel de Control · Kara Sunset</span>
         <h1 class="admin-title" id="adminGreeting">Hola, Kamila</h1>
     </div>
 
