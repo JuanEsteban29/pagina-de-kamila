@@ -745,21 +745,21 @@ function setupProductForm() {
 
         const tonesStr = currentToneObjects.map(t => t.name).join(", ");
 
-        // Comprimir Foto 1
+        // Comprimir Foto 1 a Alta Nitidez (HD 1200px)
         let imgFinal = "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400";
         if (currentUploadedImageBase64) {
             try {
-                imgFinal = await comprimirImagen(currentUploadedImageBase64, 300);
+                imgFinal = await comprimirImagen(currentUploadedImageBase64, 1200);
             } catch(e) {
                 imgFinal = currentUploadedImageBase64;
             }
         }
 
-        // Comprimir Foto 2 si fue subida por archivo
+        // Comprimir Foto 2 a Alta Nitidez (HD 1200px)
         if (currentSecondUploadedImageBase64) {
             let imgSecondFinal = currentSecondUploadedImageBase64;
             try {
-                imgSecondFinal = await comprimirImagen(currentSecondUploadedImageBase64, 300);
+                imgSecondFinal = await comprimirImagen(currentSecondUploadedImageBase64, 1200);
             } catch(e) {
                 imgSecondFinal = currentSecondUploadedImageBase64;
             }
@@ -866,8 +866,8 @@ function setupProductForm() {
     });
 }
 
-// Comprime una imagen base64 a un tamaño máximo de ancho/alto en píxeles
-function comprimirImagen(base64, maxSize = 300) {
+// Comprime una imagen base64 con alta nitidez (HD 1200px)
+function comprimirImagen(base64, maxSize = 1200) {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
@@ -877,8 +877,13 @@ function comprimirImagen(base64, maxSize = 300) {
             else        { if (h > maxSize) { w = Math.round(w * maxSize / h); h = maxSize; } }
             canvas.width = w;
             canvas.height = h;
-            canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-            resolve(canvas.toDataURL("image/jpeg", 0.75));
+
+            const ctx = canvas.getContext("2d");
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.drawImage(img, 0, 0, w, h);
+
+            resolve(canvas.toDataURL("image/jpeg", 0.92));
         };
         img.onerror = reject;
         img.src = base64;
