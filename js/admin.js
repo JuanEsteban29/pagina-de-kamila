@@ -37,28 +37,43 @@ function setupPassGate() {
     const loginError = document.getElementById("loginError");
     const btnLogout = document.getElementById("btnLogout");
 
+    if (!loginForm || !loginScreen) return;
+
     // Verificar si ya inició sesión en esta sesión del navegador
     if (sessionStorage.getItem("KARA_ADMIN_LOGGED") === "true") {
         loginScreen.style.display = "none";
     }
 
+    // Lista de claves aceptadas (insensible a mayúsculas/minúsculas)
+    const CLAVES_PERMITIDAS = ["KARA2026", "KARA", "KAMILA", "ADMIN", "1234"];
+
     loginForm.addEventListener("submit", (e) => {
         e.preventDefault();
-        if (adminPass.value === CONTRASEÑA_CORRECTA) {
+        const ingresada = (adminPass.value || "").trim().toUpperCase();
+
+        if (CLAVES_PERMITIDAS.includes(ingresada)) {
             sessionStorage.setItem("KARA_ADMIN_LOGGED", "true");
-            gsap.to(loginScreen, {
-                opacity: 0,
-                scale: 0.95,
-                duration: 0.5,
-                onComplete: () => loginScreen.style.display = "none"
-            });
+            loginError.style.display = "none";
+            if (window.gsap) {
+                gsap.to(loginScreen, {
+                    opacity: 0,
+                    scale: 0.95,
+                    duration: 0.4,
+                    onComplete: () => loginScreen.style.display = "none"
+                });
+            } else {
+                loginScreen.style.display = "none";
+            }
         } else {
+            loginError.textContent = "Contraseña incorrecta. (Prueba con: KARA2026)";
             loginError.style.display = "block";
-            gsap.fromTo(loginScreen.querySelector(".login-card"), 
-                { x: -10 }, { x: 10, duration: 0.1, repeat: 5, yoyo: true, onComplete: () => {
-                    loginScreen.querySelector(".login-card").style.transform = "none";
-                }}
-            );
+            if (window.gsap && loginScreen.querySelector(".login-card")) {
+                gsap.fromTo(loginScreen.querySelector(".login-card"), 
+                    { x: -10 }, { x: 10, duration: 0.1, repeat: 5, yoyo: true, onComplete: () => {
+                        loginScreen.querySelector(".login-card").style.transform = "none";
+                    }}
+                );
+            }
         }
     });
 
