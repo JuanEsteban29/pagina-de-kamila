@@ -427,6 +427,59 @@ async function loadCatalog() {
 }
 
 
+// Estado del creador de tonos
+let currentToneObjects = [];
+
+function setupToneBuilder() {
+    const btnAdd = document.getElementById("btnAddToneChip");
+    const nameInput = document.getElementById("newToneName");
+    const colorInput = document.getElementById("newToneColor");
+    const chipsContainer = document.getElementById("toneChipsList");
+
+    if (!btnAdd || !nameInput || !colorInput || !chipsContainer) return;
+
+    btnAdd.addEventListener("click", () => {
+        const name = nameInput.value.trim();
+        const color = colorInput.value;
+        if (!name) return;
+
+        currentToneObjects.push({ name, color });
+        nameInput.value = "";
+        renderToneChips();
+    });
+}
+
+function renderToneChips() {
+    const chipsContainer = document.getElementById("toneChipsList");
+    const hiddenTones = document.getElementById("prodTones");
+    if (!chipsContainer) return;
+
+    chipsContainer.innerHTML = "";
+
+    currentToneObjects.forEach((t, index) => {
+        const chip = document.createElement("div");
+        chip.className = "tone-chip-item";
+        chip.innerHTML = `
+            <span class="tone-chip-color" style="background: ${t.color}"></span>
+            <span>${t.name}</span>
+            <button type="button" class="tone-chip-remove" data-index="${index}">&times;</button>
+        `;
+        chipsContainer.appendChild(chip);
+    });
+
+    chipsContainer.querySelectorAll(".tone-chip-remove").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const idx = parseInt(e.target.dataset.index);
+            currentToneObjects.splice(idx, 1);
+            renderToneChips();
+        });
+    });
+
+    if (hiddenTones) {
+        hiddenTones.value = currentToneObjects.map(t => t.name).join(", ");
+    }
+}
+
 function renderCatalogList(filtrados = null) {
     const listContainer = document.getElementById("catalogList");
     const searchCatalogInput = document.getElementById("searchCatalogInput");
@@ -458,13 +511,25 @@ function renderCatalogList(filtrados = null) {
                 </div>
             </div>
             <div class="item-price">$${prod.price.toFixed(2)}</div>
+            <button class="btn-edit" data-id="${prod.id}" title="Editar producto">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                Editar
+            </button>
             <button class="btn-delete" data-id="${prod.id}" title="Eliminar producto">
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                 Borrar
             </button>
         `;
 
         listContainer.appendChild(itemDiv);
+    });
+
+    // Eventos de editar
+    listContainer.querySelectorAll(".btn-edit").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const id = parseInt(btn.dataset.id);
+            cargarProductoParaEditar(id);
+        });
     });
 
     // Eventos de eliminar
@@ -496,84 +561,209 @@ function renderCatalogList(filtrados = null) {
     }
 }
 
+// Cargar producto existente en el formulario para editar
+function cargarProductoParaEditar(id) {
+    const prod = catalogoCompleto.find(p => p.id === id);
+    if (!prod) return;
+
+    document.getElementById("editProdId").value = prod.id;
+    document.getElementById("prodTitle").value = prod.title || "";
+    document.getElementById("prodPrice").value = prod.price || 0;
+    document.getElementById("prodCategory").value = prod.category || "labios";
+    document.getElementById("prodStock").value = prod.stock || 1;
+    document.getElementById("prodBadge").value = prod.badge || "";
+    
+    // Cargar fotos adicionales si existen
+    const extraInput = document.getElementById("prodExtraImages");
+    if (extraInput) {
+        extraInput.value = (prod.images && Array.isArray(prod.images)) ? prod.images.join(", ") : "";
+    }
+
+    // Cargar tonos
+    if (prod.toneObjects && Array.isArray(prod.toneObjects)) {
+        currentToneObjects = [...prod.toneObjects];
+    } else if (prod.tones) {
+        currentToneObjects = prod.tones.split(",").map(t => ({ name: t.trim(), color: "#EC1C80" })).filter(t => t.name);
+    } else {
+        currentToneObjects = [];
+    }
+    renderToneChips();
+
+    // Cargar vista previa de imagen
+    const imagePreview = document.getElementById("imagePreview");
+    const previewContainer = document.getElementById("previewContainer");
+    const uploadPrompt = document.getElementById("uploadPrompt");
+    if (prod.img) {
+        currentUploadedImageBase64 = prod.img;
+        imagePreview.src = prod.img;
+        previewContainer.style.display = "flex";
+        uploadPrompt.style.display = "none";
+    }
+
+    // Cambiar UI a modo edición
+    document.getElementById("stepBadgeText").textContent = `✏️ Modificando Producto #${prod.id}`;
+    document.getElementById("btnSubmitForm").textContent = "Actualizar Producto ✨";
+    document.getElementById("btnCancelEdit").style.display = "inline-flex";
+
+    // Scroll suave al formulario
+    document.querySelector(".studio-panel").scrollIntoView({ behavior: "smooth" });
+}
+
+function cancelarEdicion() {
+    document.getElementById("productForm").reset();
+    document.getElementById("editProdId").value = "";
+    document.getElementById("stepBadgeText").textContent = "02 · Detalles del Producto";
+    document.getElementById("btnSubmitForm").textContent = "Guardar Producto ✨";
+    document.getElementById("btnCancelEdit").style.display = "none";
+    currentUploadedImageBase64 = "";
+    currentToneObjects = [];
+    renderToneChips();
+    
+    const previewContainer = document.getElementById("previewContainer");
+    const uploadPrompt = document.getElementById("uploadPrompt");
+    if (previewContainer && uploadPrompt) {
+        previewContainer.style.display = "none";
+        uploadPrompt.style.display = "block";
+    }
+}
+
 // ==========================================
-// 7. AÑADIR / ELIMINAR PRODUCTOS
+// 7. AÑADIR / ELIMINAR / EDITAR PRODUCTOS
 // ==========================================
 function setupProductForm() {
+    setupToneBuilder();
+
     const form = document.getElementById("productForm");
+    const btnCancel = document.getElementById("btnCancelEdit");
+
+    if (btnCancel) {
+        btnCancel.addEventListener("click", cancelarEdicion);
+    }
+
     if (!form) return;
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
+        const editIdVal = document.getElementById("editProdId").value;
+        const isEditing = Boolean(editIdVal);
+        const editId = isEditing ? parseInt(editIdVal) : null;
+
         const title = document.getElementById("prodTitle").value.trim();
         const price = parseFloat(document.getElementById("prodPrice").value);
         const category = document.getElementById("prodCategory").value;
-        const tones = document.getElementById("prodTones").value.trim();
         const stock = parseInt(document.getElementById("prodStock").value) || 1;
+        const badge = document.getElementById("prodBadge").value || "";
+        const extraImgsVal = document.getElementById("prodExtraImages") ? document.getElementById("prodExtraImages").value.trim() : "";
+        const extraImages = extraImgsVal ? extraImgsVal.split(",").map(s => s.trim()).filter(Boolean) : [];
 
-        // Determinar ID único — siempre mayor que 1000
-        // para evitar colisión con los 21 productos del fallback hardcodeado
-        const baseMaxId = Math.max(
-            catalogoCompleto.reduce((max, p) => p.id > max ? p.id : max, 0),
-            1000
-        );
-        const newId = baseMaxId + 1;
+        const tonesStr = currentToneObjects.map(t => t.name).join(", ");
 
-        // Comprimir imagen a max 300px para que quepa en localStorage sin problema
+        // Imagen principal
         let imgFinal = "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400";
         if (currentUploadedImageBase64) {
             try {
                 imgFinal = await comprimirImagen(currentUploadedImageBase64, 300);
             } catch(e) {
-                imgFinal = currentUploadedImageBase64; // usar original si falla la compresión
+                imgFinal = currentUploadedImageBase64;
             }
         }
 
-        const nuevoProducto = {
-            id: newId,
-            title: title,
-            price: price,
-            category: category,
-            img: imgFinal,
-            stock: stock,
-            tones: tones
-        };
+        if (isEditing) {
+            // EDITAR PRODUCTO EXISTENTE
+            const prodIndex = catalogoCompleto.findIndex(p => p.id === editId);
+            if (prodIndex !== -1) {
+                const prodExistente = catalogoCompleto[prodIndex];
+                const prodActualizado = {
+                    ...prodExistente,
+                    title: title,
+                    price: price,
+                    category: category,
+                    img: currentUploadedImageBase64 ? imgFinal : prodExistente.img,
+                    images: extraImages.length > 0 ? extraImages : prodExistente.images,
+                    stock: stock,
+                    badge: badge,
+                    tones: tonesStr,
+                    toneObjects: currentToneObjects
+                };
 
-        if (serverSyncActive) {
-            catalogoCompleto.push(nuevoProducto);
-            const guardado = await guardarEnServidor(catalogoCompleto);
-            if (guardado) {
-                mostrarNotificacion("Producto guardado permanentemente. ✓");
-                form.reset();
-                document.getElementById("btnRemovePreview").click();
-                currentUploadedImageBase64 = "";
-                loadCatalog();
-            } else {
-                catalogoCompleto.pop();
-                alert("Hubo un error al guardar el producto en el servidor.");
+                if (serverSyncActive) {
+                    catalogoCompleto[prodIndex] = prodActualizado;
+                    const guardado = await guardarEnServidor(catalogoCompleto);
+                    if (guardado) {
+                        mostrarNotificacion(`Producto "${title}" actualizado en el servidor. ✓`);
+                        cancelarEdicion();
+                        loadCatalog();
+                    } else {
+                        alert("No se pudo guardar la actualización en el servidor.");
+                    }
+                } else {
+                    // Modo estático (localStorage)
+                    catalogoCompleto[prodIndex] = prodActualizado;
+                    // Si estaba en añadidos locales, actualizarlo
+                    const localIdx = localAddedProducts.findIndex(p => p.id === editId);
+                    if (localIdx !== -1) {
+                        localAddedProducts[localIdx] = prodActualizado;
+                    } else {
+                        localAddedProducts.push(prodActualizado);
+                    }
+                    localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
+                    mostrarNotificacion(`Producto "${title}" actualizado localmente. ✓`);
+                    cancelarEdicion();
+                    loadCatalog();
+                }
             }
         } else {
-            // Modo estático (localStorage)
-            localAddedProducts.push(nuevoProducto);
-            try {
-                localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
-            } catch(e) {
-                // Si localStorage está lleno, guardar sin imagen
-                nuevoProducto.img = "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400";
-                localAddedProducts[localAddedProducts.length - 1] = nuevoProducto;
-                localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
-                mostrarNotificacion("⚠️ Imagen no guardada (almacenamiento lleno). Producto agregado sin foto.");
+            // CREAR NUEVO PRODUCTO
+            const baseMaxId = Math.max(
+                catalogoCompleto.reduce((max, p) => p.id > max ? p.id : max, 0),
+                1000
+            );
+            const newId = baseMaxId + 1;
+
+            const nuevoProducto = {
+                id: newId,
+                title: title,
+                price: price,
+                category: category,
+                img: imgFinal,
+                images: extraImages,
+                stock: stock,
+                badge: badge,
+                tones: tonesStr,
+                toneObjects: currentToneObjects
+            };
+
+            if (serverSyncActive) {
+                catalogoCompleto.push(nuevoProducto);
+                const guardado = await guardarEnServidor(catalogoCompleto);
+                if (guardado) {
+                    mostrarNotificacion("Producto creado permanentemente. ✓");
+                    cancelarEdicion();
+                    loadCatalog();
+                } else {
+                    catalogoCompleto.pop();
+                    alert("Hubo un error al guardar el producto en el servidor.");
+                }
+            } else {
+                // Modo estático (localStorage)
+                localAddedProducts.push(nuevoProducto);
+                try {
+                    localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
+                } catch(e) {
+                    nuevoProducto.img = "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400";
+                    localAddedProducts[localAddedProducts.length - 1] = nuevoProducto;
+                    localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
+                    mostrarNotificacion("⚠️ Imagen no guardada (almacenamiento lleno). Producto agregado sin foto.");
+                }
+
+                localDeletedIds = localDeletedIds.filter(id => id !== newId);
+                localStorage.setItem('KARA_ADMIN_DELETED', JSON.stringify(localDeletedIds));
+
+                mostrarNotificacion("Producto creado. ✓ — Ya aparece en la tienda y catálogo.");
+                cancelarEdicion();
+                loadCatalog();
             }
-
-            localDeletedIds = localDeletedIds.filter(id => id !== newId);
-            localStorage.setItem('KARA_ADMIN_DELETED', JSON.stringify(localDeletedIds));
-
-            mostrarNotificacion("Producto agregado. ✓ — Ya aparece en la tienda y en este catálogo.");
-            form.reset();
-            document.getElementById("btnRemovePreview").click();
-            currentUploadedImageBase64 = "";
-            loadCatalog();
         }
     });
 }

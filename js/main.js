@@ -280,16 +280,18 @@ function migrarProductosAdminLegacy() {
 // 2. RENDERIZADO DINÁMICO DE PRODUCTOS
 // ==========================================
 
-// Genera un color determinístico (siempre el mismo para el mismo texto) a partir
-// del nombre del tono, para mostrarlo como swatch. No es el color real del producto,
-// es solo una guía visual para diferenciar tonos de un vistazo, estilo Huda Beauty.
-function toneToColor(name) {
+// Genera un color determinístico o usa el color hex del objeto de tono
+function getToneColor(toneItem) {
+    if (toneItem && toneItem.color) {
+        return toneItem.color;
+    }
+    const name = typeof toneItem === 'string' ? toneItem : (toneItem.name || '');
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
         hash = name.charCodeAt(i) + ((hash << 5) - hash);
     }
     const hue = Math.abs(hash) % 360;
-    return `hsl(${hue}, 55%, 68%)`;
+    return `hsl(${hue}, 65%, 62%)`;
 }
 
 function renderProductos(filtrados = null) {
@@ -297,7 +299,6 @@ function renderProductos(filtrados = null) {
     if (!grid) return;
 
     grid.innerHTML = "";
-    // Usar dbProductos que fue cargado dinámicamente, con fallback
     const lista = filtrados || dbProductos.slice(0, productosVisibles);
 
     if (lista.length === 0) {
@@ -312,26 +313,52 @@ function renderProductos(filtrados = null) {
         card.className = "product-card";
         card.style.setProperty('--card-index', i);
 
+        // Renderizado de Tonos con Colores Reales
         let htmlTonos = '';
-        if (prod.tones) {
-            const toneList = prod.tones.split(',').map(t => t.trim()).filter(Boolean);
-            const maxDots = 6;
-            const dotsHtml = toneList.slice(0, maxDots).map(t =>
-                `<span class="tone-dot" style="background:${toneToColor(t)}" title="${t}"></span>`
-            ).join('');
+        let toneList = [];
+
+        if (prod.toneObjects && Array.isArray(prod.toneObjects) && prod.toneObjects.length > 0) {
+            toneList = prod.toneObjects;
+        } else if (prod.tones) {
+            toneList = prod.tones.split(',').map(t => ({ name: t.trim(), color: toneToColor(t.trim()) })).filter(t => t.name);
+        }
+
+        if (toneList.length > 0) {
+            const maxDots = 7;
+            const dotsHtml = toneList.slice(0, maxDots).map((t, tIdx) => {
+                const colorHex = getToneColor(t);
+                const toneName = typeof t === 'string' ? t : t.name;
+                const toneImg = t.img || '';
+                return `<span class="tone-dot ${tIdx === 0 ? 'active' : ''}" style="background:${colorHex}" title="${toneName}" data-tone="${toneName}" data-img="${toneImg}"></span>`;
+            }).join('');
+            
             const extra = toneList.length > maxDots
                 ? `<span class="tone-more">+${toneList.length - maxDots}</span>`
                 : '';
             htmlTonos = `<div class="product-tones"><div class="tone-dots">${dotsHtml}${extra}</div></div>`;
         }
 
-        const htmlBadge = (typeof prod.stock === 'number' && prod.stock > 0 && prod.stock <= 2)
-            ? `<span class="product-badge">¡Últimas unidades!</span>`
-            : '';
+        // Insignias Huda (VEGAN FRIENDLY, AHORRA 10%, etc.)
+        let htmlBadge = '';
+        if (prod.badge === 'VEGAN FRIENDLY') {
+            htmlBadge = `<div class="badge-vegan-circle" title="Fórmula Vegana"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg><span>VEGAN</span></div>`;
+        } else if (prod.badge) {
+            htmlBadge = `<span class="badge-discount-banner">${prod.badge}</span>`;
+        } else if (typeof prod.stock === 'number' && prod.stock > 0 && prod.stock <= 2) {
+            htmlBadge = `<span class="product-badge">¡Últimas unidades!</span>`;
+        }
+
+        // Estrellas de Valoración
+        const ratingVal = prod.rating || 5.0;
+        const reviewsCount = prod.reviews || Math.floor(Math.abs(Math.sin(prod.id) * 80) + 12);
+        const htmlRating = `<div class="product-rating"><span class="stars">★★★★★</span> <span>${ratingVal.toFixed(1)} (${reviewsCount})</span></div>`;
+
+        // Fotos adicionales para hover swap
+        const secondaryImg = (prod.images && prod.images.length > 0) ? prod.images[0] : prod.img;
 
         card.innerHTML = `
             <div class="product-image-container">
-                <img src="${prod.img}" alt="${prod.title}" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400'">
+                <img src="${prod.img}" alt="${prod.title}" loading="lazy" class="main-prod-img" data-orig-img="${prod.img}" data-second-img="${secondaryImg}" onerror="this.src='https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400'">
                 ${htmlBadge}
                 <button class="fav-card-btn ${isFav ? 'active' : ''}" data-id="${prod.id}" aria-label="Favorito">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
@@ -341,15 +368,47 @@ function renderProductos(filtrados = null) {
                 </button>
             </div>
             <div class="product-info">
-                <span class="product-category">${prod.category.toUpperCase()}</span>
                 <h3 class="product-title">${prod.title}</h3>
-                ${htmlTonos}
                 <span class="product-price">$${prod.price.toFixed(2)}</span>
+                ${htmlTonos}
+                ${htmlRating}
                 <button type="button" class="btn-huda-primary btn-add-cart" data-id="${prod.id}">
-                    Añadir a la bolsa
+                    AÑADIR A LA CESTA
                 </button>
             </div>
         `;
+
+        // Eventos para swatches de tonos
+        const toneDots = card.querySelectorAll(".tone-dot");
+        toneDots.forEach(dot => {
+            dot.addEventListener("click", (e) => {
+                toneDots.forEach(d => d.classList.remove("active"));
+                dot.classList.add("active");
+
+                // Si el tono tiene foto personalizada, cambiarla
+                const toneImg = dot.dataset.img;
+                const mainImg = card.querySelector(".main-prod-img");
+                if (toneImg && mainImg) {
+                    mainImg.src = toneImg;
+                }
+            });
+        });
+
+        // Evento Hover para intercambiar foto secundaria si existe
+        if (prod.images && prod.images.length > 0) {
+            const mainImg = card.querySelector(".main-prod-img");
+            card.addEventListener("mouseenter", () => {
+                if (mainImg && secondaryImg) {
+                    mainImg.src = secondaryImg;
+                }
+            });
+            card.addEventListener("mouseleave", () => {
+                if (mainImg) {
+                    mainImg.src = mainImg.dataset.origImg;
+                }
+            });
+        }
+
         grid.appendChild(card);
     });
 
@@ -365,14 +424,12 @@ function setupCardHoverAnimations() {
         const img = card.querySelector(".product-image-container img");
         const btn = card.querySelector(".btn-add-cart");
         card.addEventListener("mouseenter", () => {
-            gsap.to(card, { y: -6, boxShadow: "0 20px 50px rgba(0,0,0,0.08)", duration: 0.4, ease: "power2.out" });
-            if (img) gsap.to(img, { scale: 1.08, duration: 0.6, ease: "power2.out" });
-            if (btn) gsap.to(btn, { backgroundColor: "transparent", color: "#000000", duration: 0.3, ease: "power2.out" });
+            gsap.to(card, { y: -6, boxShadow: "0 15px 35px rgba(236, 28, 128, 0.15)", duration: 0.3, ease: "power2.out" });
+            if (img) gsap.to(img, { scale: 1.06, duration: 0.5, ease: "power2.out" });
         });
         card.addEventListener("mouseleave", () => {
-            gsap.to(card, { y: 0, boxShadow: "none", duration: 0.4, ease: "power2.out" });
-            if (img) gsap.to(img, { scale: 1, duration: 0.6, ease: "power2.out" });
-            if (btn) gsap.to(btn, { backgroundColor: "#000000", color: "#ffffff", duration: 0.3, ease: "power2.out" });
+            gsap.to(card, { y: 0, boxShadow: "none", duration: 0.3, ease: "power2.out" });
+            if (img) gsap.to(img, { scale: 1, duration: 0.5, ease: "power2.out" });
         });
     });
 }

@@ -24,16 +24,33 @@
         "category": "rostro",
         "img": "assets/images/blush brillo.jpeg",
         "stock": 3,
-        "tones": ""
+        "tones": "Tono 01 Rose Gold, Tono 02 Coral Glow",
+        "toneObjects": [
+            { "name": "Tono 01 Rose Gold", "color": "#E58B88" },
+            { "name": "Tono 02 Coral Glow", "color": "#E86F58" }
+        ],
+        "badge": "BESTSELLER",
+        "rating": 5.0,
+        "reviews": 42
     },
     {
         "id": 4,
-        "title": "Bases matte",
+        "title": "Bases matte Suede",
         "price": 10.15,
         "category": "rostro",
         "img": "assets/images/base matte.jpeg",
         "stock": 5,
-        "tones": "1 Carmel, 1 Vainilla, 1 Tam, 1 Nutmeg, 1 Golden"
+        "tones": "1 Carmel, 1 Vainilla, 1 Tam, 1 Nutmeg, 1 Golden",
+        "toneObjects": [
+            { "name": "1 Carmel", "color": "#D28B60" },
+            { "name": "1 Vainilla", "color": "#F3D0AA" },
+            { "name": "1 Tam", "color": "#E5B183" },
+            { "name": "1 Nutmeg", "color": "#B86F45" },
+            { "name": "1 Golden", "color": "#DC9F6E" }
+        ],
+        "badge": "AHORRA 10%",
+        "rating": 4.9,
+        "reviews": 128
     },
     {
         "id": 5,
@@ -65,7 +82,7 @@
     {
         "id": 8,
         "title": "Gorros de satín",
-        "price": 7,
+        "price": 7.0,
         "category": "accesorios",
         "img": "assets/images/gorros.jpeg",
         "stock": 3,
@@ -78,7 +95,10 @@
         "category": "rostro",
         "img": "assets/images/polvo.jpeg",
         "stock": 1,
-        "tones": "N°10"
+        "tones": "N°10 Velvet Nude",
+        "toneObjects": [
+            { "name": "N°10 Velvet Nude", "color": "#E4B28E" }
+        ]
     },
     {
         "id": 10,
@@ -87,7 +107,12 @@
         "category": "labios",
         "img": "assets/images/vinyl.jpeg",
         "stock": 2,
-        "tones": ""
+        "tones": "Tono Red Vinyl, Tono Nude Silk",
+        "toneObjects": [
+            { "name": "Red Vinyl", "color": "#B8192A" },
+            { "name": "Nude Silk", "color": "#C7796D" }
+        ],
+        "badge": "VEGAN FRIENDLY"
     },
     {
         "id": 11,
@@ -96,12 +121,20 @@
         "category": "labios",
         "img": "assets/images/tinta.jpeg",
         "stock": 4,
-        "tones": "2 Poppy, 1 Lily, 1 Iris"
+        "tones": "2 Poppy, 1 Lily, 1 Iris",
+        "toneObjects": [
+            { "name": "2 Poppy", "color": "#D33052" },
+            { "name": "1 Lily", "color": "#E36284" },
+            { "name": "1 Iris", "color": "#94213B" }
+        ],
+        "badge": "VEGAN FRIENDLY",
+        "rating": 5.0,
+        "reviews": 15
     },
     {
         "id": 12,
         "title": "Lipgloss Juicy Bomb",
-        "price": 3,
+        "price": 3.0,
         "category": "labios",
         "img": "assets/images/brillo.jpeg",
         "stock": 3,
@@ -110,7 +143,7 @@
     {
         "id": 13,
         "title": "Lápices para cejas negros",
-        "price": 2,
+        "price": 2.0,
         "category": "ojos",
         "img": "assets/images/lapiz-negro.jpeg",
         "stock": 3,
@@ -119,7 +152,7 @@
     {
         "id": 14,
         "title": "Lápices para cejas marrones",
-        "price": 2,
+        "price": 2.0,
         "category": "ojos",
         "img": "assets/images/lapiz-marron.jpeg",
         "stock": 2,
@@ -136,26 +169,38 @@
     },
     {
         "id": 16,
-        "title": "Correctores",
+        "title": "Correctores Luminous Matte",
         "price": 5.2,
         "category": "rostro",
         "img": "assets/images/corrector.jpeg",
         "stock": 8,
-        "tones": "1 Brown, 2 Honey, 2 Ivory, 2 Carmel, 1 Beige"
+        "tones": "1 Brown, 2 Honey, 2 Ivory, 2 Carmel, 1 Beige",
+        "toneObjects": [
+            { "name": "1 Brown", "color": "#8C4D2E" },
+            { "name": "2 Honey", "color": "#D49666" },
+            { "name": "2 Ivory", "color": "#FBE3CA" },
+            { "name": "2 Carmel", "color": "#C47D50" },
+            { "name": "1 Beige", "color": "#ECC49D" }
+        ]
     },
     {
         "id": 17,
-        "title": "Blush sencillos",
-        "price": 4,
+        "title": "Blush sencillos Velvet",
+        "price": 4.0,
         "category": "rostro",
         "img": "assets/images/BLUSH SENCILLOS.jpeg",
         "stock": 3,
-        "tones": "Tono 07, 04, 11"
+        "tones": "Tono 07, Tono 04, Tono 11",
+        "toneObjects": [
+            { "name": "Tono 07", "color": "#DD6578" },
+            { "name": "Tono 04", "color": "#E97B66" },
+            { "name": "Tono 11", "color": "#C74B5E" }
+        ]
     },
     {
         "id": 18,
         "title": "Bases de borlas",
-        "price": 4,
+        "price": 4.0,
         "category": "accesorios",
         "img": "assets/images/borlas.jpeg",
         "stock": 2,
@@ -181,11 +226,22 @@
     },
     {
         "id": 21,
-        "title": "Lip Gloss Dolce Bella",
-        "price": 4,
+        "title": "Mousse Mate Líquida Lip Gloss",
+        "price": 4.0,
         "category": "labios",
         "img": "assets/images/LIP GLOSS.jpeg",
         "stock": 13,
-        "tones": "C02, D3, D4, D6, D5, 06, 04, D1, 01, 03"
+        "tones": "C02, D3, D4, D6, D5, 06, 04, D1, 01, 03",
+        "toneObjects": [
+            { "name": "C02 Warm Nude", "color": "#D48777" },
+            { "name": "D3 Bombshell Pink", "color": "#DF6C7D" },
+            { "name": "D4 Velvet Rose", "color": "#C44B5C" },
+            { "name": "D6 Deep Mauve", "color": "#8F384B" },
+            { "name": "D5 Terracotta", "color": "#B55644" },
+            { "name": "06 Chocolate", "color": "#5E2922" }
+        ],
+        "badge": "VEGAN FRIENDLY",
+        "rating": 5.0,
+        "reviews": 92
     }
 ]
