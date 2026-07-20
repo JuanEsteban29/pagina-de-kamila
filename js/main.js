@@ -660,27 +660,147 @@ function setupServicesDropdown() {
 // ==========================================
 // 6. CARRITO, FAVORITOS E INSIGNIAS
 // ==========================================
-function agregarAlCarrito(id) {
-    const prod = dbProductos.find(p => p.id === id); //[cite: 6]
-    if (!prod) return; //[cite: 6]
-    
-    // Preguntar tono de manera sencilla si el producto posee variantes[cite: 4]
-    let tonoSeleccionado = "";
-    if (prod.tones) {
-        tonoSeleccionado = prompt(`Selecciona una variante/tono para ${prod.title}:\n(${prod.tones})`);
-        if (tonoSeleccionado === null) return; // Cancelar acción si cierra la ventana
+// ==========================================
+// 6. CARRITO, FAVORITOS E INSIGNIAS CON SELECCIÓN INTERACTIVA DE TONO
+// ==========================================
+
+let productoPendienteTono = null;
+let tonoSeleccionadoActual = "";
+
+function abrirModalSeleccionTono(prod) {
+    const toneModal = document.getElementById("toneSelectorModal");
+    const toneBody = document.getElementById("toneSelectorBody");
+    const closeBtn = document.getElementById("closeToneModal");
+
+    if (!toneModal || !toneBody) return;
+
+    productoPendienteTono = prod;
+
+    // Obtener lista de tonos
+    let toneList = [];
+    if (prod.toneObjects && Array.isArray(prod.toneObjects) && prod.toneObjects.length > 0) {
+        toneList = prod.toneObjects;
+    } else if (prod.tones) {
+        toneList = prod.tones.split(",").map(t => ({ name: t.trim(), color: getToneColor(t.trim()) })).filter(t => t.name);
     }
 
-    const existe = carrito.find(item => item.id === id && item.selectedTone === tonoSeleccionado); //[cite: 6]
-    if (existe) {
-        existe.cantidad += 1; //[cite: 6]
-    } else {
-        carrito.push({ ...prod, cantidad: 1, selectedTone: tonoSeleccionado }); //[cite: 6]
+    if (toneList.length === 0) {
+        confirmarAgregarConTono(prod, "");
+        return;
     }
-    localStorage.setItem('KARA_CART', JSON.stringify(carrito)); //[cite: 6]
-    actualizarInsignias(); //[cite: 6]
-    const cartModal = document.getElementById("cartModal"); //[cite: 6]
-    if (cartModal && cartModal.classList.contains("open-panel")) actualizarVistaCarrito(); //[cite: 6]
+
+    // Tono seleccionado por defecto (el primero)
+    const primerTono = typeof toneList[0] === "string" ? toneList[0] : (toneList[0].name || "");
+    tonoSeleccionadoActual = primerTono;
+
+    // Renderizar HTML del modal
+    const swatchesHtml = toneList.map((t, idx) => {
+        const name = typeof t === "string" ? t : (t.name || "");
+        const color = getToneColor(t);
+        const isActive = idx === 0 ? "active" : "";
+        return `
+            <button type="button" class="tone-option-btn ${isActive}" data-tone="${name}" style="display: flex; align-items: center; gap: 8px; padding: 0.6rem 1rem; border-radius: 25px; border: 1.5px solid ${idx === 0 ? 'var(--primary)' : '#EAEAEA'}; background: #fff; cursor: pointer; transition: all 0.2s ease;">
+                <span style="width: 18px; height: 18px; border-radius: 50%; background: ${color}; box-shadow: 0 0 0 1px rgba(0,0,0,0.15);"></span>
+                <span style="font-size: 0.82rem; font-weight: 600;">${name}</span>
+            </button>
+        `;
+    }).join("");
+
+    toneBody.innerHTML = `
+        <div style="margin-bottom: 1rem;">
+            <img src="${prod.img}" alt="${prod.title}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 14px; margin-bottom: 0.8rem; box-shadow: 0 4px 15px rgba(0,0,0,0.08);">
+            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.3rem;">${prod.title}</h3>
+            <span style="font-size: 1.15rem; font-weight: 800; color: var(--primary);">$${prod.price.toFixed(2)}</span>
+        </div>
+
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.8rem;">Selecciona tu tono preferido:</p>
+        
+        <div class="tone-options-grid" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 1.2rem; max-height: 200px; overflow-y: auto; padding: 4px;">
+            ${swatchesHtml}
+        </div>
+
+        <div style="font-size: 0.82rem; margin-bottom: 1.2rem; background: #F8F4FC; padding: 0.6rem 1rem; border-radius: 12px; color: var(--primary); font-weight: 600;" id="selectedToneLabel">
+            ✨ Tono seleccionado: <strong>${primerTono}</strong>
+        </div>
+
+        <button type="button" class="btn-huda-primary" id="btnConfirmToneAdd" style="width: 100%; padding: 0.85rem; border-radius: 25px; font-weight: 700;">
+            Añadir a la bolsa 🛍️
+        </button>
+    `;
+
+    toneModal.style.display = "flex";
+
+    // Eventos para seleccionar tonos dentro del modal
+    const toneButtons = toneBody.querySelectorAll(".tone-option-btn");
+    const label = toneBody.getElementById ? toneBody.getElementById("selectedToneLabel") : toneBody.querySelector("#selectedToneLabel");
+    
+    toneButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            toneButtons.forEach(b => {
+                b.classList.remove("active");
+                b.style.borderColor = "#EAEAEA";
+            });
+            btn.classList.add("active");
+            btn.style.borderColor = "var(--primary)";
+            tonoSeleccionadoActual = btn.dataset.tone;
+            if (label) {
+                label.innerHTML = `✨ Tono seleccionado: <strong>${tonoSeleccionadoActual}</strong>`;
+            }
+        });
+    });
+
+    const btnConfirm = toneBody.querySelector("#btnConfirmToneAdd");
+    if (btnConfirm) {
+        btnConfirm.addEventListener("click", () => {
+            confirmarAgregarConTono(prod, tonoSeleccionadoActual);
+            toneModal.style.display = "none";
+        });
+    }
+
+    if (closeBtn) {
+        closeBtn.onclick = () => toneModal.style.display = "none";
+    }
+
+    toneModal.onclick = (e) => {
+        if (e.target === toneModal) toneModal.style.display = "none";
+    };
+}
+
+function confirmarAgregarConTono(prod, tono) {
+    const existe = carrito.find(item => item.id === prod.id && item.selectedTone === tono);
+    if (existe) {
+        existe.cantidad += 1;
+    } else {
+        carrito.push({ ...prod, cantidad: 1, selectedTone: tono });
+    }
+    localStorage.setItem('KARA_CART', JSON.stringify(carrito));
+    actualizarInsignias();
+    
+    // Abrir panel lateral del carrito para mostrar la prenda agregada
+    const cartModal = document.getElementById("cartModal");
+    if (cartModal) {
+        cartModal.classList.add("open-panel");
+        actualizarVistaCarrito();
+    }
+}
+
+function agregarAlCarrito(id) {
+    const prod = dbProductos.find(p => p.id === id);
+    if (!prod) return;
+    
+    // Si tiene tonos, abrir el modal interactivo de selección de tono
+    let toneList = [];
+    if (prod.toneObjects && Array.isArray(prod.toneObjects) && prod.toneObjects.length > 0) {
+        toneList = prod.toneObjects;
+    } else if (prod.tones && prod.tones.trim().length > 0) {
+        toneList = prod.tones.split(",").map(t => t.trim()).filter(Boolean);
+    }
+
+    if (toneList.length > 0) {
+        abrirModalSeleccionTono(prod);
+    } else {
+        confirmarAgregarConTono(prod, "");
+    }
 }
 
 function toggleFavorito(id, element) {

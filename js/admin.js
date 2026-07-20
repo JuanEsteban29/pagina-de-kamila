@@ -542,6 +542,8 @@ function hslToHex(h, s, l) {
     return `#${f(0)}${f(8)}${f(4)}`;
 }
 
+let userManuallySelectedColor = false;
+
 function setupToneBuilder() {
     const btnAdd = document.getElementById("btnAddToneChip");
     const nameInput = document.getElementById("newToneName");
@@ -550,10 +552,19 @@ function setupToneBuilder() {
 
     if (!btnAdd || !nameInput || !colorInput || !chipsContainer) return;
 
-    // Al escribir en el nombre del tono, auto-detectar y cambiar el color en tiempo real
+    // Si el usuario toca o cambia la paleta de colores manualmente, recordar su elección
+    colorInput.addEventListener("input", () => {
+        userManuallySelectedColor = true;
+    });
+
+    colorInput.addEventListener("change", () => {
+        userManuallySelectedColor = true;
+    });
+
+    // Al escribir el nombre del tono, auto-detectar solo si el usuario no eligió un color manualmente
     nameInput.addEventListener("input", () => {
         const val = nameInput.value.trim();
-        if (val.length > 0) {
+        if (val.length > 0 && !userManuallySelectedColor) {
             const detectedColor = autoDetectToneColor(val);
             colorInput.value = detectedColor;
         }
@@ -575,6 +586,7 @@ function setupToneBuilder() {
         currentToneObjects.push({ name, color });
         nameInput.value = "";
         colorInput.value = "#EC1C80";
+        userManuallySelectedColor = false;
         renderToneChips();
     });
 }
