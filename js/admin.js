@@ -116,17 +116,21 @@ function loadAIModel() {
     const aiStatusMsg = document.getElementById("aiStatusMsg");
     showAIStatus("Inicializando Inteligencia Artificial...", "loading");
 
-    // Esperar a que se carguen los scripts defer de TensorFlow.js
+    let retries = 0;
     const checkInterval = setInterval(() => {
+        retries++;
         if (window.tf && window.mobilenet) {
             clearInterval(checkInterval);
             mobilenet.load().then(model => {
                 tfModel = model;
-                showAIStatus("Inteligencia Artificial lista para escanear.", "success");
+                showAIStatus("Inteligencia Artificial lista para escanear. ✨", "success");
             }).catch(err => {
                 console.error("Error al cargar MobileNet:", err);
-                showAIStatus("IA inactiva (falló la descarga del modelo).", "error");
+                showAIStatus("Modo manual activo.", "info");
             });
+        } else if (retries >= 6) { // máximo 3 segundos de espera
+            clearInterval(checkInterval);
+            showAIStatus("Modo catalogación manual listo. ✨", "info");
         }
     }, 500);
 }
