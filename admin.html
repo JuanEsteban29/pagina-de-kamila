@@ -8,30 +8,29 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&family=Bodoni+Moda:ital,wght@0,400;0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
     <style>
-    <style>
         :root {
-            --primary: #A435E8;
-            --primary-dark: #8B26D1;
-            --secondary: #FF4FA3;
-            --secondary-dark: #E63488;
-            --gradient: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            --gradient-hover: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
-            --bg-main: #F9F6FC;
+            /* Colores vivos: Azul Pastel + Rosa Pastel + Morado Sunset */
+            --primary: #4A85F6;           /* Azul Pastel Vibrante */
+            --primary-dark: #2563EB;
+            --secondary: #FF66B2;         /* Rosa Pastel Vibrante */
+            --secondary-dark: #E03D8E;
+            --pastel-purple: #A435E8;
+            --gradient: linear-gradient(135deg, #4A85F6 0%, #FF66B2 100%);
+            --gradient-hover: linear-gradient(135deg, #2563EB 0%, #E03D8E 100%);
+            --bg-main: #F2F6FF;
             --bg-surface: #FFFFFF;
-            --text-main: #1A1625;
-            --text-muted: #6B6578;
-            --border-color: rgba(164, 53, 232, 0.12);
-            --shadow-color: rgba(164, 53, 232, 0.18);
+            --text-main: #1E1B2E;
+            --text-muted: #5C5570;
+            --border-color: rgba(74, 133, 246, 0.22);
+            --shadow-color: rgba(74, 133, 246, 0.25);
             --success: #10B981;
             --danger: #EF4444;
 
-            /* Identidad brillante KARA Sunset */
             --gold: #FFD166;
             --gold-deep: #D99A2B;
-            --gold-soft: rgba(255, 209, 102, 0.18);
-            --blush: #F4E8FF;
-            --cream: #FFF0F6;
-            --ring-gradient: conic-gradient(from 180deg, var(--primary), var(--gold), var(--secondary), var(--primary));
+            --blush: #EBF3FF;
+            --cream: #FFEAF4;
+            --ring-gradient: conic-gradient(from 180deg, var(--primary), var(--secondary), var(--pastel-purple), var(--primary));
         }
 
         * {
@@ -51,7 +50,7 @@
             overflow-x: hidden;
         }
 
-        /* Bruma ambiental rosa/morada/dorada */
+        /* Bruma ambiental Azul + Rosa Pastel viva */
         .ambient-glow {
             position: fixed;
             inset: 0;
@@ -64,28 +63,28 @@
             position: absolute;
             border-radius: 50%;
             filter: blur(100px);
-            opacity: 0.45;
+            opacity: 0.55;
         }
 
         .ambient-glow span:nth-child(1) {
-            width: 550px; height: 550px;
+            width: 600px; height: 600px;
             top: -180px; left: -140px;
-            background: var(--primary);
-            opacity: 0.22;
+            background: #4A85F6;
+            opacity: 0.38;
         }
 
         .ambient-glow span:nth-child(2) {
-            width: 480px; height: 480px;
+            width: 540px; height: 540px;
             top: 25%; right: -180px;
-            background: var(--secondary);
-            opacity: 0.20;
+            background: #FF66B2;
+            opacity: 0.38;
         }
 
         .ambient-glow span:nth-child(3) {
-            width: 420px; height: 420px;
+            width: 480px; height: 480px;
             bottom: -160px; left: 25%;
-            background: var(--gold);
-            opacity: 0.25;
+            background: #A435E8;
+            opacity: 0.28;
         }
 
         /* Brillitos animados */
