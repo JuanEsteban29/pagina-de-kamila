@@ -21,11 +21,28 @@ document.addEventListener("DOMContentLoaded", () => {
 
 async function initAdmin() {
     setupPassGate();
+    setupDynamicGreeting();
     setupImageUpload();
     setupProductForm();
     await setupSyncMode();
     loadAIModel();
     await loadCatalog();
+}
+
+function setupDynamicGreeting() {
+    const greetingElem = document.getElementById("adminGreeting");
+    if (!greetingElem) return;
+
+    const hour = new Date().getHours();
+    let saludo = "Buenos días";
+
+    if (hour >= 12 && hour < 19) {
+        saludo = "Buenas tardes";
+    } else if (hour >= 19 || hour < 5) {
+        saludo = "Buenas noches";
+    }
+
+    greetingElem.textContent = `${saludo}, Kamila`;
 }
 
 // ==========================================
@@ -848,7 +865,7 @@ function cargarProductoParaEditar(id) {
 
     // Cambiar UI a modo edición
     document.getElementById("stepBadgeText").textContent = `✏️ Modificando Producto #${prod.id}`;
-    document.getElementById("btnSubmitForm").textContent = "Actualizar Producto ✨";
+    document.getElementById("btnSubmitForm").textContent = "Actualizar Producto";
     document.getElementById("btnCancelEdit").style.display = "inline-flex";
 
     // Scroll suave al formulario
@@ -859,7 +876,7 @@ function cancelarEdicion() {
     document.getElementById("productForm").reset();
     document.getElementById("editProdId").value = "";
     document.getElementById("stepBadgeText").textContent = "02 · Detalles del Producto";
-    document.getElementById("btnSubmitForm").textContent = "Guardar Producto ✨";
+    document.getElementById("btnSubmitForm").textContent = "Guardar Producto";
     document.getElementById("btnCancelEdit").style.display = "none";
     currentUploadedImageBase64 = "";
     currentSecondUploadedImageBase64 = "";
