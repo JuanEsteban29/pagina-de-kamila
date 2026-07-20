@@ -17,6 +17,15 @@ app.get('/api/ping', (req, res) => {
     res.json({ success: true, message: 'Server is active' });
 });
 
+// API para obtener el catálogo fresco en tiempo real
+app.get('/api/productos', (req, res) => {
+    const filePath = path.join(__dirname, 'js', 'productos.json');
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.sendFile(filePath);
+});
+
 // API para guardar el catálogo actualizado en productos.json
 app.post('/api/productos', (req, res) => {
     const productos = req.body;

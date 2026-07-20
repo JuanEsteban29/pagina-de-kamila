@@ -202,14 +202,19 @@ let dbProductos = [];
 
 async function cargarProductosDB() {
     try {
-        const res = await fetch("js/productos.json");
+        // Intentar primero desde el API en vivo del servidor
+        let res = await fetch("/api/productos", { cache: "no-store" });
+        if (!res.ok) {
+            // Fallback con parametro no-cache
+            res = await fetch("js/productos.json?v=" + Date.now());
+        }
         if (res.ok) {
             dbProductos = await res.json();
         } else {
-            throw new Error("No se pudo cargar el archivo");
+            throw new Error("No se pudo cargar el catálogo");
         }
     } catch (e) {
-        console.warn("CORS o JSON no disponible. Cargando catálogo por defecto:", e);
+        console.warn("CORS o servidor no disponible. Cargando catálogo por defecto:", e);
         dbProductos = [...dbProductosFallback];
     }
 

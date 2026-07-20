@@ -462,16 +462,18 @@ async function loadCatalog() {
 
     let dbOrig = [];
 
-    // Intentar leer de productos.json — si falla (modo file://) usar fallback directamente
+    // Intentar leer de /api/productos o productos.json
     try {
-        const res = await fetch("js/productos.json");
+        let res = await fetch("/api/productos", { cache: "no-store" });
+        if (!res.ok) {
+            res = await fetch("js/productos.json?v=" + Date.now());
+        }
         if (res.ok) {
             dbOrig = await res.json();
         } else {
             dbOrig = dbFallback;
         }
     } catch (e) {
-        // CORS en file:// — usar fallback sin mostrar error al usuario
         console.info("[KARA Admin] Sin servidor detectado. Usando catálogo base local.");
         dbOrig = dbFallback;
     }
