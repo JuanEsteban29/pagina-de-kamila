@@ -349,8 +349,6 @@ function renderProductos(filtrados = null) {
             htmlBadge = `<div class="badge-vegan-circle" title="Fórmula Vegana"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><polyline points="20 6 9 17 4 12"></polyline></svg><span>VEGAN</span></div>`;
         } else if (prod.badge) {
             htmlBadge = `<span class="badge-discount-banner">${prod.badge}</span>`;
-        } else if (typeof prod.stock === 'number' && prod.stock > 0 && prod.stock <= 2) {
-            htmlBadge = `<span class="product-badge">¡Últimas unidades!</span>`;
         }
 
         // Estrellas de Valoración
@@ -360,6 +358,11 @@ function renderProductos(filtrados = null) {
 
         // Fotos adicionales para hover swap
         const secondaryImg = (prod.images && prod.images.length > 0) ? prod.images[0] : prod.img;
+
+        // Control de Agotado / InStock
+        const isAgotado = typeof prod.stock === "number" && prod.stock <= 0;
+        const btnText = isAgotado ? "AGOTADO 🚫" : "AÑADIR A LA CESTA";
+        const btnDisabledAttr = isAgotado ? "disabled style='opacity: 0.55; cursor: not-allowed; filter: grayscale(1);'" : "";
 
         card.innerHTML = `
             <div class="product-image-container">
@@ -377,8 +380,8 @@ function renderProductos(filtrados = null) {
                 <span class="product-price">$${prod.price.toFixed(2)}</span>
                 ${htmlTonos}
                 ${htmlRating}
-                <button type="button" class="btn-huda-primary btn-add-cart" data-id="${prod.id}">
-                    AÑADIR A LA CESTA
+                <button type="button" class="btn-huda-primary btn-add-cart" data-id="${prod.id}" ${btnDisabledAttr}>
+                    ${btnText}
                 </button>
             </div>
         `;
@@ -792,6 +795,11 @@ function confirmarAgregarConTono(prod, tono) {
 function agregarAlCarrito(id) {
     const prod = dbProductos.find(p => p.id === id);
     if (!prod) return;
+    
+    if (typeof prod.stock === "number" && prod.stock <= 0) {
+        alert("Lo sentimos, este producto se encuentra actualmente agotado.");
+        return;
+    }
     
     // Si tiene tonos, abrir el modal interactivo de selección de tono
     let toneList = [];
