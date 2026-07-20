@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function initAdmin() {
+    setupPassGate();
     setupImageUpload();
     setupProductForm();
     await setupSyncMode();
@@ -28,10 +29,54 @@ async function initAdmin() {
 }
 
 // ==========================================
-// 1. CONTROL DE ACCESO (PASS GATE)
+// 1. CONTROL DE ACCESO CON CLAVE (KARA2026)
 // ==========================================
 function setupPassGate() {
-    // Pantalla de login removida para acceso directo
+    const loginScreen = document.getElementById("loginScreen");
+    const loginForm = document.getElementById("loginForm");
+    const passInput = document.getElementById("adminPassword");
+    const errorMsg = document.getElementById("loginErrorMessage");
+    const btnLogout = document.getElementById("btnLogout");
+
+    if (!loginScreen || !loginForm || !passInput) return;
+
+    const isAuth = sessionStorage.getItem('KARA_ADMIN_AUTH') === 'true';
+
+    if (isAuth) {
+        loginScreen.style.display = "none";
+    } else {
+        loginScreen.style.display = "flex";
+        setTimeout(() => passInput.focus(), 300);
+    }
+
+    loginForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const enteredPass = passInput.value.trim();
+
+        if (enteredPass === CONTRASEÑA_CORRECTA) {
+            sessionStorage.setItem('KARA_ADMIN_AUTH', 'true');
+            if (errorMsg) errorMsg.style.display = "none";
+            loginScreen.style.display = "none";
+            mostrarNotificacion("¡Acceso concedido! Bienvenida Kamila ✨");
+        } else {
+            if (errorMsg) errorMsg.style.display = "block";
+            passInput.value = "";
+            passInput.focus();
+            const box = loginScreen.querySelector(".login-box");
+            if (box) {
+                box.style.animation = "none";
+                box.offsetHeight; // Reflow
+                box.style.animation = "loginShake 0.4s ease";
+            }
+        }
+    });
+
+    if (btnLogout) {
+        btnLogout.addEventListener("click", () => {
+            sessionStorage.removeItem('KARA_ADMIN_AUTH');
+            location.reload();
+        });
+    }
 }
 
 // ==========================================
