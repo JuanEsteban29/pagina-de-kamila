@@ -39,42 +39,32 @@ function setupPassGate() {
 
     if (!loginForm || !loginScreen) return;
 
-    // Verificar si ya inició sesión en esta sesión del navegador
+    // Abrir panel directamente
+    function desbloquearPanel() {
+        sessionStorage.setItem("KARA_ADMIN_LOGGED", "true");
+        if (loginError) loginError.style.display = "none";
+        if (window.gsap) {
+            gsap.to(loginScreen, {
+                opacity: 0,
+                scale: 0.95,
+                duration: 0.3,
+                onComplete: () => {
+                    loginScreen.style.display = "none";
+                }
+            });
+        } else {
+            loginScreen.style.display = "none";
+        }
+    }
+
+    // Verificar si ya inició sesión previamente
     if (sessionStorage.getItem("KARA_ADMIN_LOGGED") === "true") {
         loginScreen.style.display = "none";
     }
 
-    // Lista de claves aceptadas (insensible a mayúsculas/minúsculas)
-    const CLAVES_PERMITIDAS = ["KARA2026", "KARA", "KAMILA", "ADMIN", "1234"];
-
     loginForm.addEventListener("submit", (e) => {
         e.preventDefault();
-        const ingresada = (adminPass.value || "").trim().toUpperCase();
-
-        if (CLAVES_PERMITIDAS.includes(ingresada)) {
-            sessionStorage.setItem("KARA_ADMIN_LOGGED", "true");
-            loginError.style.display = "none";
-            if (window.gsap) {
-                gsap.to(loginScreen, {
-                    opacity: 0,
-                    scale: 0.95,
-                    duration: 0.4,
-                    onComplete: () => loginScreen.style.display = "none"
-                });
-            } else {
-                loginScreen.style.display = "none";
-            }
-        } else {
-            loginError.textContent = "Contraseña incorrecta. (Prueba con: KARA2026)";
-            loginError.style.display = "block";
-            if (window.gsap && loginScreen.querySelector(".login-card")) {
-                gsap.fromTo(loginScreen.querySelector(".login-card"), 
-                    { x: -10 }, { x: 10, duration: 0.1, repeat: 5, yoyo: true, onComplete: () => {
-                        loginScreen.querySelector(".login-card").style.transform = "none";
-                    }}
-                );
-            }
-        }
+        desbloquearPanel();
     });
 
     if (btnLogout) {
