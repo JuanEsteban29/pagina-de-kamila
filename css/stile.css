@@ -2,24 +2,21 @@
    KARA Makeup — Premium Huda-Style Design System
    ========================================================================== */
 :root {
-    --primary: #EC1C80; /* Huda Hot Pink / Magenta */
-    --secondary: #E4007F;
-    --huda-pink: #EC1C80;
-    --huda-dark: #1C1C1C;
-    --huda-cream: #F5F3EF;
+    --primary: #E22963;
+    --secondary: #E4484B;
     --gradient: linear-gradient(135deg, var(--primary), var(--secondary));
 
-    --bg-main: #FFFFFF;
+    --bg-main: #FAFAFA;
     --bg-surface: #FFFFFF;
     --text-main: #1C1C1C;
-    --text-muted: #666666;
-    --border-color: #EEEEEE;
-    --shadow-color: rgba(236, 28, 128, 0.12);
-    --glass-bg: rgba(255, 255, 255, 0.95);
-    --glass-border: rgba(236, 28, 128, 0.15);
+    --text-muted: #777777;
+    --border-color: #EAEAEA;
+    --shadow-color: rgba(226, 41, 99, 0.08);
+    --glass-bg: rgba(255, 255, 255, 0.85);
+    --glass-border: rgba(255, 255, 255, 0.2);
     --gold-glow: #E9AE52;
-    --announce-h: 36px;
-    --header-h: 105px;
+    --announce-h: 38px;
+    --header-h: 72px;
 }
 
 /* ==========================================================================
@@ -46,9 +43,9 @@ body {
 
 .container {
     width: 100%;
-    max-width: 1280px;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 4rem 2rem;
+    padding: 6rem 2rem;
 }
 
 a { 
@@ -66,7 +63,7 @@ button {
 }
 
 /* ==========================================================================
-   BARRA DE ANUNCIO (Exacto Screenshot Huda)
+   BARRA DE ANUNCIO (estilo Huda Beauty)
    ========================================================================== */
 .announcement-bar {
     position: fixed;
@@ -74,151 +71,93 @@ button {
     left: 0;
     width: 100%;
     height: var(--announce-h);
-    background: var(--huda-cream);
-    color: #1C1C1C;
+    background: #000000;
+    color: #FFFFFF;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1002;
     padding: 0 1rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .announcement-bar p {
-    font-size: 0.72rem;
-    font-weight: 700;
+    font-size: 0.68rem;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.8px;
+    letter-spacing: 1.5px;
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.announcement-bar a {
-    color: #1C1C1C;
-    text-decoration: underline;
-}
-
 /* ==========================================================================
-   HEADER HUDA HOT PINK (Fondo Rosado Magenta Vibrante)
+   HEADER (Translucent & Minimalist)
    ========================================================================== */
 .main-header {
-    background-color: var(--huda-pink) !important;
+    background: linear-gradient(90deg, #C51F51 0%, #E9AE52 100%) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
     position: fixed;
     top: var(--announce-h);
     left: 0;
     width: 100%;
     z-index: 1000;
-    box-shadow: 0 4px 15px rgba(236, 28, 128, 0.25);
-    color: #FFFFFF;
-}
-
-.header-top-row {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .header-container {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    max-width: 1380px;
+    max-width: 1300px;
     margin: 0 auto;
-    padding: 0 2rem;
+    padding: 1.2rem 2rem;
 }
 
-/* Enlaces superiores izquierdos */
-.header-quick-links {
-    display: flex;
-    align-items: center;
-    gap: 1.2rem;
-}
-
-.huda-top-link {
-    color: #FFFFFF !important;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    transition: opacity 0.2s ease;
-}
-
-.huda-top-link:hover {
-    opacity: 0.8;
-}
-
-.huda-top-link.highlight {
-    background: rgba(255, 255, 255, 0.2);
-    padding: 0.2rem 0.6rem;
-    border-radius: 4px;
-}
-
-/* Logo Central "kara beauty" */
 .logo { 
     display: flex; 
     align-items: center; 
-    justify-content: center;
+    gap: 0.75rem; 
+}
+
+.logo-img {
+    height: 38px; 
+    width: 38px; 
+    object-fit: cover;
+    border-radius: 50%; 
+    border: 1.5px solid #ffffff;
 }
 
 .main-header .logo-text {
     font-family: 'Playfair Display', serif !important;
     color: #ffffff !important;
     font-weight: 700 !important;
-    font-size: 2.2rem !important;
-    letter-spacing: 2px !important;
-    text-transform: lowercase !important;
-}
-
-/* Acciones derechas y Selector de Moneda */
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.currency-selector {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #FFFFFF;
-    letter-spacing: 0.5px;
-    cursor: pointer;
-    display: inline-block;
-    margin-right: 0.5rem;
-}
-
-.header-btn {
-    color: #FFFFFF !important;
-}
-
-/* Sub-navegación (Fila Rosada de Categorías) */
-.header-subnav-row {
-    padding: 0.5rem 0;
-    display: flex;
-    justify-content: center;
+    font-size: 1.6rem !important;
+    letter-spacing: 3px !important;
 }
 
 .nav-menu { 
     display: flex; 
     align-items: center; 
-    justify-content: center;
-    gap: 2rem; 
-    flex-wrap: wrap;
+    gap: 0.75rem; 
 }
 
-.main-header .nav-link {
+.main-header .nav-link,
+.main-header .nav-services-btn {
     color: #FFFFFF !important;
-    font-weight: 700 !important;
-    font-size: 0.78rem !important;
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0.5rem 1rem !important;
+    font-weight: 600 !important;
+    font-size: 0.8rem !important;
     text-transform: uppercase !important;
-    letter-spacing: 1.5px !important;
-    padding: 0.3rem 0.6rem !important;
+    letter-spacing: 2px !important;
     position: relative;
-    transition: opacity 0.2s ease !important;
-}
-
-.main-header .nav-link:hover {
-    opacity: 0.85;
+    transition: all 0.3s ease !important;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .main-header .nav-link::after {
@@ -1584,273 +1523,211 @@ button {
 }
 
 /* ==========================================================================
-   HERO HUDA BEAUTY — PRODUCT SHOWCASE (Sin foto de Kamila)
+   HERO — CINEMATIC SPLIT-SCREEN
    ========================================================================== */
-.hero-huda {
-    min-height: 80vh;
+.hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 100vh;
     padding-top: calc(var(--header-h) + var(--announce-h));
-    background: linear-gradient(135deg, #FFF0F6 0%, #FDF5F8 50%, #F5F3EF 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
+    background: #0a0a0a;
     overflow: hidden;
 }
 
-.hero-huda-banner {
-    max-width: 1380px;
-    width: 100%;
-    margin: 0 auto;
-    padding: 4rem 2rem;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3rem;
-    align-items: center;
-}
-
-.hero-huda-content {
+.hero-left {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    justify-content: center;
+    padding: 5rem 4rem 5rem 5rem;
+    background: linear-gradient(135deg, #C51F51 0%, #E9AE52 100%);
+    position: relative;
+    z-index: 2;
 }
 
-.hero-huda-badges {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 1.5rem;
+.hero-left::after {
+    content: '';
+    position: absolute;
+    right: -40px;
+    top: 0;
+    width: 80px;
+    height: 100%;
+    background: linear-gradient(135deg, #C51F51 0%, #E9AE52 100%);
+    clip-path: polygon(0 0, 0% 100%, 100% 100%);
+    z-index: 3;
 }
 
-.huda-badge-pill {
-    background: var(--huda-pink);
+.hero-eyebrow {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    color: rgba(255,255,255,0.75);
+    font-weight: 600;
+    margin-bottom: 2rem;
+    display: block;
+}
+
+.hero-title {
+    font-family: 'Cormorant Garamond', serif !important;
+    font-size: 4.5rem !important;
+    font-weight: 300 !important;
+    line-height: 1.05 !important;
     color: #FFFFFF;
-    font-size: 0.7rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    padding: 0.4rem 0.8rem;
-    border-radius: 20px;
+    margin-bottom: 1.8rem;
+    letter-spacing: 0px;
 }
 
-.huda-badge-circle {
-    background: #FFFFFF;
-    color: var(--huda-pink);
-    border: 1px solid var(--huda-pink);
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    padding: 0.35rem 0.8rem;
-    border-radius: 20px;
+.hero-title em {
+    font-style: italic;
+    font-weight: 400;
+    color: rgba(255,255,255,0.9);
+}
+
+.hero-text {
+    font-size: 0.92rem;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 2.5rem;
+    max-width: 380px;
+    letter-spacing: 0.3px;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 3rem;
+}
+
+.btn-hero-primary {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    background: #FFFFFF;
+    color: #000000;
+    font-weight: 700;
+    padding: 1rem 2.2rem;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    border: 2px solid #FFFFFF;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn-hero-primary:hover {
+    background: transparent;
+    color: #FFFFFF;
+}
+
+.btn-hero-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    color: #FFFFFF;
+    font-weight: 700;
+    padding: 1rem 2.2rem;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    border: 2px solid rgba(255,255,255,0.6);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.btn-hero-outline:hover {
+    border-color: #FFFFFF;
+    background: rgba(255,255,255,0.1);
+}
+
+.hero-stats {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255,255,255,0.2);
+}
+
+.hero-stat {
+    display: flex;
+    flex-direction: column;
     gap: 4px;
 }
 
-.hero-huda-title {
-    font-family: 'Playfair Display', serif !important;
-    font-size: 3.8rem !important;
-    font-weight: 800 !important;
-    line-height: 1.1;
-    color: #1C1C1C;
-    margin-bottom: 1.2rem;
-    letter-spacing: -1px;
+.stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.65rem;
     text-transform: uppercase;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.65);
+    font-weight: 600;
 }
 
-.hero-huda-subtitle {
-    font-size: 1.05rem;
-    line-height: 1.7;
-    color: #555555;
-    margin-bottom: 2.2rem;
-    max-width: 480px;
+.hero-stat-divider {
+    width: 1px;
+    height: 36px;
+    background: rgba(255,255,255,0.25);
 }
 
-.hero-huda-actions {
-    display: flex;
-    align-items: center;
-    gap: 1.2rem;
-    flex-wrap: wrap;
-}
-
-.btn-huda-cta {
-    background-color: var(--huda-pink) !important;
-    color: #FFFFFF !important;
-    font-size: 0.85rem !important;
-    font-weight: 800 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 2px !important;
-    padding: 1.1rem 2.8rem !important;
-    border-radius: 30px !important;
-    border: 2px solid var(--huda-pink) !important;
-    box-shadow: 0 8px 25px rgba(236, 28, 128, 0.35);
-    transition: all 0.3s ease !important;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-huda-cta:hover {
-    background-color: #C70068 !important;
-    border-color: #C70068 !important;
-    transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(236, 28, 128, 0.45);
-}
-
-.btn-huda-outline {
-    background-color: transparent !important;
-    color: #1C1C1C !important;
-    font-size: 0.85rem !important;
-    font-weight: 800 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 2px !important;
-    padding: 1.1rem 2.5rem !important;
-    border-radius: 30px !important;
-    border: 2px solid #1C1C1C !important;
-    transition: all 0.3s ease !important;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-huda-outline:hover {
-    background-color: #1C1C1C !important;
-    color: #FFFFFF !important;
-}
-
-.hero-huda-showcase {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.showcase-img-wrap {
+/* Right side — full-bleed photo */
+.hero-right {
     position: relative;
-    width: 100%;
-    max-width: 480px;
-    height: 480px;
-    border-radius: 24px;
     overflow: hidden;
-    box-shadow: 0 20px 50px rgba(236, 28, 128, 0.15);
-    background: #FFFFFF;
 }
 
-.showcase-hero-img {
+.hero-model-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.6s ease;
+    object-position: center top;
+    display: block;
+    filter: brightness(0.92) contrast(1.05);
+    transition: transform 8s ease;
 }
 
-.showcase-img-wrap:hover .showcase-hero-img {
-    transform: scale(1.05);
+.hero-right:hover .hero-model-img {
+    transform: scale(1.04);
 }
 
-/* ==========================================================================
-   ESTILOS ESPECÍFICOS BOTONES & PRODUCT CARDS HUDA (Screenshot 2 Match)
-   ========================================================================== */
-.btn-huda-primary,
-.btn-add-cart {
-    background-color: var(--huda-pink) !important;
-    color: #FFFFFF !important;
-    padding: 0.85rem 1.4rem !important;
-    border-radius: 25px !important;
-    font-weight: 800 !important;
-    text-transform: uppercase !important;
-    font-size: 0.78rem !important;
-    width: 100% !important;
-    letter-spacing: 1.5px !important;
-    border: none !important;
-    box-shadow: 0 4px 15px rgba(236, 28, 128, 0.28) !important;
-    transition: all 0.3s ease !important;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-.btn-huda-primary:hover,
-.btn-add-cart:hover {
-    background-color: #C70068 !important;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 22px rgba(236, 28, 128, 0.42) !important;
-}
-
-/* Insignias de la Tarjeta */
-.badge-vegan-circle {
+.hero-img-badge {
     position: absolute;
-    bottom: 15px;
-    right: 15px;
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: var(--huda-pink);
+    top: 2rem;
+    left: 2rem;
+    background: var(--gradient);
     color: #FFFFFF;
+    padding: 0.6rem 1rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    font-size: 0.55rem;
-    font-weight: 800;
-    line-height: 1;
-    z-index: 6;
-    box-shadow: 0 4px 12px rgba(236, 28, 128, 0.35);
+    line-height: 1.1;
 }
 
-.badge-vegan-circle svg {
-    margin-bottom: 1px;
-}
-
-.badge-discount-banner {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    background: var(--huda-pink);
-    color: #FFFFFF;
+.hero-img-badge span:first-child {
     font-size: 0.65rem;
-    font-weight: 800;
+    font-weight: 700;
+    letter-spacing: 3px;
     text-transform: uppercase;
-    padding: 0.35rem 0.75rem;
-    border-radius: 4px;
-    z-index: 6;
 }
 
-/* Valoración con Estrellas Rosa estilo Huda */
-.product-rating {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    font-size: 0.72rem;
-    color: #666666;
-    margin-bottom: 0.75rem;
+.hero-img-badge span:last-child {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    font-style: italic;
+    font-weight: 400;
 }
 
-.product-rating .stars {
-    color: var(--huda-pink);
-    letter-spacing: 1px;
-}
-
-/* Swatches de Tono con Colores Reales */
-.tone-dot {
-    width: 20px !important;
-    height: 20px !important;
-    border-radius: 50% !important;
-    box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.15), 0 0 0 3px #FFFFFF !important;
-    cursor: pointer !important;
-    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
-    display: inline-block;
-    position: relative;
-}
-
-.tone-dot:hover,
-.tone-dot.active {
-    transform: scale(1.3) !important;
-    box-shadow: 0 0 0 2px var(--huda-pink), 0 0 0 4px #FFFFFF !important;
-}
-
-/* MARQUEE TICKER */
+/* ==========================================================================
+   MARQUEE TICKER
+   ========================================================================== */
 .marquee-strip {
     background: #000000;
     padding: 0.9rem 0;
@@ -1867,12 +1744,21 @@ button {
 }
 
 .marquee-track span {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 2.5px;
     color: #FFFFFF;
-    font-weight: 700;
+    font-weight: 600;
     flex-shrink: 0;
+}
+
+.marquee-track span:nth-child(even) {
+    color: var(--gold-glow);
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    font-weight: 400;
 }
 
 @keyframes marqueeScroll {
@@ -1881,7 +1767,37 @@ button {
 }
 
 /* ==========================================================================
-   ADMIN PANEL: BOTÓN EDITAR & TONE BUILDER
+   RESPONSIVE — HERO SPLIT
+   ========================================================================== */
+@media (max-width: 992px) {
+    .hero {
+        grid-template-columns: 1fr;
+        min-height: auto;
+    }
+    .hero-left {
+        padding: 5rem 2rem 4rem 2rem;
+        order: 2;
+    }
+    .hero-left::after { display: none; }
+    .hero-right {
+        order: 1;
+        height: 78vw;
+        min-height: 320px;
+        max-height: 480px;
+        background: linear-gradient(135deg, #C51F51 0%, #E9AE52 100%);
+    }
+    .hero-model-img {
+        object-fit: contain;
+        object-position: center center;
+        padding: 1rem;
+    }
+    .hero-title { font-size: 3rem !important; }
+    .hero-img-badge { top: 1rem; left: 1rem; }
+    .container { padding: 4rem 1.5rem; }
+}
+
+/* ==========================================================================
+   ADMIN PANEL: BOTÓN EDITAR, TONE BUILDER CON COLOR PICKER & MULTI-FOTOS
    ========================================================================== */
 .btn-edit {
     background: #EBF3FF;
@@ -1968,18 +1884,93 @@ button {
     margin-left: 2px;
 }
 
-@media (max-width: 992px) {
-    .hero-huda-banner {
-        grid-template-columns: 1fr;
-        text-align: center;
+/* Swatches de Tono con Colores Reales en la tienda */
+.tone-dot {
+    width: 18px !important;
+    height: 18px !important;
+    border-radius: 50% !important;
+    box-shadow: 0 0 0 1.5px rgba(0, 0, 0, 0.15), 0 0 0 3px #FFFFFF !important;
+    cursor: pointer !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    display: inline-block;
+    position: relative;
+}
+
+.tone-dot:hover,
+.tone-dot.active {
+    transform: scale(1.25) !important;
+    box-shadow: 0 0 0 2px var(--primary), 0 0 0 4px #FFFFFF !important;
+}
+
+/* ==========================================================================
+   OPTIMIZACIONES DE RESPONSIVIDAD PARA TELÉFONO (MÓVIL)
+   ========================================================================== */
+@media (max-width: 600px) {
+    .container {
+        padding: 3rem 1.2rem;
     }
-    .hero-huda-content {
-        align-items: center;
+
+    .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1.2rem;
     }
-    .hero-huda-title {
-        font-size: 2.8rem !important;
+
+    .product-card {
+        padding: 0;
     }
-    .showcase-img-wrap {
-        height: 340px;
+
+    .product-info {
+        padding: 1rem 0.5rem 0.8rem 0.5rem !important;
+    }
+
+    .product-title {
+        font-size: 0.85rem !important;
+    }
+
+    .product-price {
+        font-size: 1.05rem !important;
+        margin-bottom: 0.8rem !important;
+    }
+
+    .btn-huda-primary,
+    .btn-add-cart {
+        padding: 0.75rem 0.8rem !important;
+        font-size: 0.72rem !important;
+    }
+
+    /* Admin Panel Móvil */
+    .studio-panel {
+        padding: 1.5rem 1.2rem !important;
+        border-radius: 18px !important;
+    }
+
+    .studio-title {
+        font-size: 1.4rem !important;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .form-grid .input-group:last-child {
+        grid-column: auto !important;
+    }
+
+    .catalog-item {
+        flex-wrap: wrap;
+        gap: 0.8rem;
+    }
+
+    .btn-edit, .btn-delete {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+
+    .tone-input-row {
+        flex-wrap: wrap;
+    }
+
+    .tone-input-row input[type="text"] {
+        width: 100%;
     }
 }
