@@ -1100,6 +1100,7 @@
                                 </div>
                             </div>
                             <input type="hidden" id="prodTones" value="">
+                            <input type="hidden" id="prodExtraImages" value="">
                         </div>
 
                         <button type="submit" id="btnSubmitForm" class="btn-action btn-primary" style="margin-top: 1rem;">Guardar Producto ✨</button>
@@ -1127,8 +1128,33 @@
             </div>
         </section>
 
-        <!-- Columna: Catálogo Existente -->
+        <!-- Columna: Catálogo Existente y Gestión de Inventario -->
         <section class="catalog-manager">
+            <!-- Resumen Estadístico de Inventario -->
+            <div class="inventory-stats-widget" id="inventoryStatsWidget">
+                <div class="stat-card stat-total">
+                    <div class="stat-icon-circle" style="background: rgba(164, 53, 232, 0.12); color: var(--primary);">📦</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="statTotalCount">0</span>
+                        <span class="stat-label">Total Productos</span>
+                    </div>
+                </div>
+                <div class="stat-card stat-low">
+                    <div class="stat-icon-circle" style="background: rgba(255, 152, 0, 0.15); color: #E65100;">⚠️</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="statLowCount">0</span>
+                        <span class="stat-label">Stock Bajo (&lt; 3)</span>
+                    </div>
+                </div>
+                <div class="stat-card stat-out">
+                    <div class="stat-icon-circle" style="background: rgba(244, 67, 54, 0.15); color: #D32F2F;">🚫</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="statOutCount">0</span>
+                        <span class="stat-label">Agotados (Stock 0)</span>
+                    </div>
+                </div>
+            </div>
+
             <div class="sync-notice" id="syncStatusNotice">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 <div style="flex-grow:1;">

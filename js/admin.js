@@ -629,6 +629,19 @@ function renderCatalogList(filtrados = null) {
     const searchCatalogInput = document.getElementById("searchCatalogInput");
     if (!listContainer) return;
 
+    // Actualizar Widget de Estadísticas de Inventario
+    const statTotalElem = document.getElementById("statTotalCount");
+    const statLowElem = document.getElementById("statLowCount");
+    const statOutElem = document.getElementById("statOutCount");
+
+    const totalProd = catalogoCompleto.length;
+    const outProd = catalogoCompleto.filter(p => (typeof p.stock !== "number" || p.stock <= 0)).length;
+    const lowProd = catalogoCompleto.filter(p => typeof p.stock === "number" && p.stock > 0 && p.stock < 3).length;
+
+    if (statTotalElem) statTotalElem.textContent = totalProd;
+    if (statOutElem) statOutElem.textContent = outProd;
+    if (statLowElem) statLowElem.textContent = lowProd;
+
     listContainer.innerHTML = "";
 
     const items = filtrados || catalogoCompleto;
@@ -644,13 +657,25 @@ function renderCatalogList(filtrados = null) {
     ordenados.forEach(prod => {
         const itemDiv = document.createElement("div");
         itemDiv.className = "catalog-item";
+
+        // Determinar badge de inventario
+        const stockVal = typeof prod.stock === "number" ? prod.stock : 1;
+        let stockBadgeHtml = "";
+        if (stockVal <= 0) {
+            stockBadgeHtml = `<span class="stock-badge badge-out">🚫 AGOTADO</span>`;
+        } else if (stockVal < 3) {
+            stockBadgeHtml = `<span class="stock-badge badge-low">⚠️ Poco Stock (${stockVal})</span>`;
+        } else {
+            stockBadgeHtml = `<span class="stock-badge badge-ok">✓ Disponible (${stockVal})</span>`;
+        }
+
         itemDiv.innerHTML = `
             <img src="${prod.img}" alt="${prod.title}" class="item-thumb" onerror="this.src='https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=100'">
             <div class="item-details">
                 <h4 class="item-title">${prod.title}</h4>
                 <div class="item-meta">
-                    <span>Categoría: <strong>${prod.category.toUpperCase()}</strong></span>
-                    <span>Stock: <strong>${prod.stock || 1}</strong></span>
+                    <span>Categoría: <strong>${(prod.category || 'general').toUpperCase()}</strong></span>
+                    ${stockBadgeHtml}
                     ${prod.tones ? `<span>Tonos: <strong>${prod.tones}</strong></span>` : ''}
                 </div>
             </div>
@@ -714,20 +739,26 @@ function cargarProductoParaEditar(id) {
     document.getElementById("prodTitle").value = prod.title || "";
     document.getElementById("prodPrice").value = prod.price || 0;
     document.getElementById("prodCategory").value = prod.category || "labios";
-    document.getElementById("prodStock").value = prod.stock || 1;
+    document.getElementById("prodStock").value = typeof prod.stock === "number" ? prod.stock : 1;
     document.getElementById("prodBadge").value = prod.badge || "";
     
-    // Cargar fotos adicionales si existen
+    // Cargar fotos adicionales de forma segura sin lanzar errores
     const extraInput = document.getElementById("prodExtraImages");
     if (extraInput) {
         extraInput.value = (prod.images && Array.isArray(prod.images)) ? prod.images.join(", ") : "";
     }
 
-    // Cargar tonos
-    if (prod.toneObjects && Array.isArray(prod.toneObjects)) {
-        currentToneObjects = [...prod.toneObjects];
-    } else if (prod.tones) {
-        currentToneObjects = prod.tones.split(",").map(t => ({ name: t.trim(), color: "#EC1C80" })).filter(t => t.name);
+    // Cargar tonos y dibujar chips visuales de los tonos actuales
+    if (prod.toneObjects && Array.isArray(prod.toneObjects) && prod.toneObjects.length > 0) {
+        currentToneObjects = prod.toneObjects.map(t => ({
+            name: typeof t === "string" ? t : t.name,
+            color: (t && t.color) ? t.color : autoDetectToneColor(typeof t === "string" ? t : t.name)
+        }));
+    } else if (prod.tones && prod.tones.trim().length > 0) {
+        currentToneObjects = prod.tones.split(",").map(t => {
+            const name = t.trim();
+            return { name: name, color: autoDetectToneColor(name) };
+        }).filter(t => t.name);
     } else {
         currentToneObjects = [];
     }
@@ -737,26 +768,33 @@ function cargarProductoParaEditar(id) {
     const imagePreview = document.getElementById("imagePreview");
     const previewContainer = document.getElementById("previewContainer");
     const uploadPrompt = document.getElementById("uploadPrompt");
+    const btnPickMain = document.getElementById("btnPickMainImage");
+
     if (prod.img) {
         currentUploadedImageBase64 = prod.img;
         imagePreview.src = prod.img;
         previewContainer.style.display = "flex";
         uploadPrompt.style.display = "none";
+        if (btnPickMain) btnPickMain.style.display = "none";
     }
 
     // Cargar vista previa de Segunda Foto
     const imagePreviewSecond = document.getElementById("imagePreviewSecond");
     const previewContainerSecond = document.getElementById("previewContainerSecond");
     const uploadPromptSecond = document.getElementById("uploadPromptSecond");
+    const btnPickSecond = document.getElementById("btnPickSecondImage");
+
     if (prod.images && prod.images.length > 0 && prod.images[0]) {
         currentSecondUploadedImageBase64 = prod.images[0];
         if (imagePreviewSecond) imagePreviewSecond.src = prod.images[0];
         if (previewContainerSecond) previewContainerSecond.style.display = "flex";
         if (uploadPromptSecond) uploadPromptSecond.style.display = "none";
+        if (btnPickSecond) btnPickSecond.style.display = "none";
     } else {
         currentSecondUploadedImageBase64 = "";
         if (previewContainerSecond) previewContainerSecond.style.display = "none";
         if (uploadPromptSecond) uploadPromptSecond.style.display = "block";
+        if (btnPickSecond) btnPickSecond.style.display = "inline-block";
     }
 
     // Cambiar UI a modo edición
