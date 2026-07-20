@@ -863,7 +863,8 @@ function setupProductForm() {
         const title = document.getElementById("prodTitle").value.trim();
         const price = parseFloat(document.getElementById("prodPrice").value);
         const category = document.getElementById("prodCategory").value;
-        const stock = parseInt(document.getElementById("prodStock").value) || 1;
+        const stockRaw = document.getElementById("prodStock").value;
+        const stock = (stockRaw !== "" && !isNaN(parseInt(stockRaw))) ? parseInt(stockRaw) : 0;
         const badge = document.getElementById("prodBadge").value || "";
         const extraImgsVal = document.getElementById("prodExtraImages") ? document.getElementById("prodExtraImages").value.trim() : "";
         let extraImages = extraImgsVal ? extraImgsVal.split(",").map(s => s.trim()).filter(Boolean) : [];
