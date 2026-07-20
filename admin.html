@@ -1086,27 +1086,20 @@
                             </div>
                         </div>
 
-                        <!-- Creador de Tonos con Selector de Color Real -->
+                        <!-- Creador de Tonos con Detección Automática de Color -->
                         <div class="input-group" style="margin-top: 1rem;">
-                            <label>Tonos y Colores del Producto 🎨</label>
+                            <label>Tonos del Producto 🎨 <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: normal;">(Al escribir el nombre, el color se asigna automáticamente)</span></label>
                             <div class="tone-builder-box">
                                 <div class="tone-input-row">
-                                    <input type="text" id="newToneName" class="input-field" placeholder="Nombre de tono (Ej. 01 Velvet Rose)" style="flex-grow: 1;">
-                                    <input type="color" id="newToneColor" class="color-picker-input" value="#EC1C80" title="Seleccionar color del tono">
-                                    <button type="button" id="btnAddToneChip" class="btn-action btn-primary" style="width: auto; padding: 0.6rem 1rem; font-size: 0.8rem;">+ Agregar</button>
+                                    <input type="text" id="newToneName" class="input-field" placeholder="Nombre de tono (Ej. Caramel, Vainilla, Rojo, Nude, Rosa...)" style="flex-grow: 1;">
+                                    <input type="color" id="newToneColor" class="color-picker-input" value="#EC1C80" title="Color asignado automáticamente">
+                                    <button type="button" id="btnAddToneChip" class="btn-action btn-primary" style="width: auto; padding: 0.6rem 1rem; font-size: 0.8rem;">+ Agregar Tono</button>
                                 </div>
                                 <div class="tone-chips-list" id="toneChipsList">
                                     <!-- Chips de tonos cargados dinámicamente -->
                                 </div>
                             </div>
                             <input type="hidden" id="prodTones" value="">
-                        </div>
-
-                        <!-- Fotos Adicionales del Producto -->
-                        <div class="input-group">
-                            <label for="prodExtraImages">Fotos Adicionales (URLs o Rutas separadas por coma)</label>
-                            <input type="text" id="prodExtraImages" class="input-field" placeholder="assets/images/foto2.jpeg, assets/images/foto3.jpeg">
-                            <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 4px;">Permite que los clientes vean varias fotos al pasar el cursor o cambiar de tono.</span>
                         </div>
 
                         <button type="submit" id="btnSubmitForm" class="btn-action btn-primary" style="margin-top: 1rem;">Guardar Producto ✨</button>

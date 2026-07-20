@@ -491,6 +491,57 @@ async function loadCatalog() {
 // Estado del creador de tonos
 let currentToneObjects = [];
 
+// Diccionario de colores automáticos para nombres de tonos de maquillaje
+const DIC_COLORES_TONOS = {
+    "carmel": "#C68642", "caramel": "#C68642", "caramelo": "#C68642",
+    "vainilla": "#F5E5B8", "vanilla": "#F5E5B8",
+    "nude": "#D19F86", "beige": "#E0C097", "arena": "#E5C49A",
+    "rojo": "#C41E3A", "red": "#C41E3A", "carmín": "#A91B2D",
+    "rosa": "#E87EA1", "rose": "#E87EA1", "pink": "#FFB6C1", "rosado": "#E87EA1",
+    "fucsia": "#D91B60", "fuchsia": "#D91B60",
+    "vino": "#6B1D2F", "wine": "#6B1D2F", "burgundy": "#6B1D2F", "tinto": "#521422",
+    "chocolate": "#5C3A21", "brown": "#5C3A21", "marrón": "#5C3A21", "café": "#4A2E1B",
+    "coral": "#FF7F50", "durazno": "#FDB99B", "peach": "#FDB99B",
+    "dorado": "#E6C200", "gold": "#E6C200", "sol": "#FFD700",
+    "morado": "#701C45", "purple": "#701C45", "plum": "#701C45", "uva": "#581537",
+    "brillo": "#E8F4F8", "clear": "#F0F8FF", "transparente": "#F0F8FF", "gloss": "#FFEBF2",
+    "bronze": "#CD7F32", "bronce": "#CD7F32",
+    "nutmeg": "#9E5938", "honey": "#E6A756", "miel": "#E6A756",
+    "ivory": "#FFF3E0", "marfil": "#FFF3E0", "berry": "#9B2335",
+    "poppy": "#E34234", "lily": "#F4C2C2", "iris": "#5A4FCF"
+};
+
+function autoDetectToneColor(name) {
+    if (!name) return "#EC1C80";
+    const lower = name.toLowerCase().trim();
+    
+    // Buscar coincidencia directa por palabra clave
+    for (const [key, hex] of Object.entries(DIC_COLORES_TONOS)) {
+        if (lower.includes(key)) {
+            return hex;
+        }
+    }
+
+    // Fallback determinístico suave
+    let hash = 0;
+    for (let i = 0; i < lower.length; i++) {
+        hash = lower.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash) % 360;
+    return hslToHex(hue, 65, 62);
+}
+
+function hslToHex(h, s, l) {
+    l /= 100;
+    const a = s * Math.min(l, 1 - l) / 100;
+    const f = n => {
+        const k = (n + h / 30) % 12;
+        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+        return Math.round(255 * color).toString(16).padStart(2, '0');
+    };
+    return `#${f(0)}${f(8)}${f(4)}`;
+}
+
 function setupToneBuilder() {
     const btnAdd = document.getElementById("btnAddToneChip");
     const nameInput = document.getElementById("newToneName");
@@ -499,13 +550,31 @@ function setupToneBuilder() {
 
     if (!btnAdd || !nameInput || !colorInput || !chipsContainer) return;
 
+    // Al escribir en el nombre del tono, auto-detectar y cambiar el color en tiempo real
+    nameInput.addEventListener("input", () => {
+        const val = nameInput.value.trim();
+        if (val.length > 0) {
+            const detectedColor = autoDetectToneColor(val);
+            colorInput.value = detectedColor;
+        }
+    });
+
+    // Permitir agregar el tono al presionar Enter en la caja de texto
+    nameInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            btnAdd.click();
+        }
+    });
+
     btnAdd.addEventListener("click", () => {
         const name = nameInput.value.trim();
-        const color = colorInput.value;
+        const color = colorInput.value || autoDetectToneColor(name);
         if (!name) return;
 
         currentToneObjects.push({ name, color });
         nameInput.value = "";
+        colorInput.value = "#EC1C80";
         renderToneChips();
     });
 }

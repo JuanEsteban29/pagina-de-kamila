@@ -1907,72 +1907,99 @@ button {
 /* ==========================================================================
    OPTIMIZACIONES DE RESPONSIVIDAD PARA TELÉFONO (MÓVIL)
    ========================================================================== */
-@media (max-width: 600px) {
-    .container {
-        padding: 3rem 1.2rem;
+@media (max-width: 768px) {
+    .studio-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
     }
 
-    .products-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 1.2rem;
-    }
-
-    .product-card {
-        padding: 0;
-    }
-
-    .product-info {
-        padding: 1rem 0.5rem 0.8rem 0.5rem !important;
-    }
-
-    .product-title {
-        font-size: 0.85rem !important;
-    }
-
-    .product-price {
-        font-size: 1.05rem !important;
-        margin-bottom: 0.8rem !important;
-    }
-
-    .btn-huda-primary,
-    .btn-add-cart {
-        padding: 0.75rem 0.8rem !important;
-        font-size: 0.72rem !important;
-    }
-
-    /* Admin Panel Móvil */
     .studio-panel {
-        padding: 1.5rem 1.2rem !important;
-        border-radius: 18px !important;
+        padding: 1.2rem !important;
+        border-radius: 16px !important;
+        margin: 1rem 0 !important;
     }
 
     .studio-title {
-        font-size: 1.4rem !important;
+        font-size: 1.5rem !important;
     }
 
     .form-grid {
         grid-template-columns: 1fr !important;
+        gap: 0.8rem !important;
     }
 
     .form-grid .input-group:last-child {
         grid-column: auto !important;
     }
 
-    .catalog-item {
-        flex-wrap: wrap;
-        gap: 0.8rem;
-    }
-
-    .btn-edit, .btn-delete {
-        padding: 6px 10px;
-        font-size: 0.75rem;
-    }
-
     .tone-input-row {
-        flex-wrap: wrap;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 8px !important;
     }
 
     .tone-input-row input[type="text"] {
-        width: 100%;
+        width: 100% !important;
+    }
+
+    .tone-input-row button {
+        width: 100% !important;
+    }
+
+    .catalog-item {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.8rem !important;
+        padding: 1rem !important;
+    }
+
+    .catalog-item .item-details {
+        width: 100% !important;
+    }
+
+    .catalog-item .btn-edit,
+    .catalog-item .btn-delete {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    .upload-area {
+        min-height: 140px !important;
+        padding: 1rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 2.5rem 1rem !important;
+    }
+
+    .products-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.8rem !important;
+    }
+
+    .product-card {
+        padding: 0 !important;
+    }
+
+    .product-info {
+        padding: 0.8rem 0.4rem !important;
+    }
+
+    .product-title {
+        font-size: 0.8rem !important;
+        line-height: 1.2 !important;
+    }
+
+    .product-price {
+        font-size: 0.95rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+
+    .btn-huda-primary,
+    .btn-add-cart {
+        padding: 0.6rem 0.5rem !important;
+        font-size: 0.68rem !important;
     }
 }
