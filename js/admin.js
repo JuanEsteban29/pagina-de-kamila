@@ -142,9 +142,14 @@ function showAIStatus(msg, type = "info") {
 }
 
 // ==========================================
+let currentUploadedImageBase64 = "";
+let currentSecondUploadedImageBase64 = "";
+
+// ==========================================
 // 4. CARGA DE IMÁGENES Y ANÁLISIS IA
 // ==========================================
 function setupImageUpload() {
+    // Foto Principal
     const uploadArea = document.getElementById("uploadArea");
     const fileInput = document.getElementById("prodImageFile");
     const previewContainer = document.getElementById("previewContainer");
@@ -154,47 +159,59 @@ function setupImageUpload() {
     const scanOverlay = document.getElementById("scanOverlay");
     const scanLine = document.getElementById("scanLine");
 
-    uploadArea.addEventListener("click", () => {
-        if (previewContainer.style.display !== "flex") {
-            fileInput.click();
+    // Segunda Foto
+    const uploadAreaSecond = document.getElementById("uploadAreaSecond");
+    const fileInputSecond = document.getElementById("prodSecondImageFile");
+    const previewContainerSecond = document.getElementById("previewContainerSecond");
+    const imagePreviewSecond = document.getElementById("imagePreviewSecond");
+    const btnRemoveSecond = document.getElementById("btnRemovePreviewSecond");
+    const uploadPromptSecond = document.getElementById("uploadPromptSecond");
+
+    // EVENTOS FOTO PRINCIPAL
+    if (uploadArea && fileInput) {
+        uploadArea.addEventListener("click", () => {
+            if (previewContainer.style.display !== "flex") {
+                fileInput.click();
+            }
+        });
+
+        uploadArea.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            uploadArea.classList.add("dragover");
+        });
+
+        uploadArea.addEventListener("dragleave", () => {
+            uploadArea.classList.remove("dragover");
+        });
+
+        uploadArea.addEventListener("drop", (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove("dragover");
+            if (e.dataTransfer.files.length > 0) {
+                procesarImagenPrincipal(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener("change", (e) => {
+            if (e.target.files.length > 0) {
+                procesarImagenPrincipal(e.target.files[0]);
+            }
+        });
+
+        if (btnRemove) {
+            btnRemove.addEventListener("click", (e) => {
+                e.stopPropagation();
+                fileInput.value = "";
+                previewContainer.style.display = "none";
+                imagePreview.src = "";
+                currentUploadedImageBase64 = "";
+                uploadPrompt.style.display = "block";
+                showAIStatus("Foto principal removida.", "info");
+            });
         }
-    });
+    }
 
-    uploadArea.addEventListener("dragover", (e) => {
-        e.preventDefault();
-        uploadArea.classList.add("dragover");
-    });
-
-    uploadArea.addEventListener("dragleave", () => {
-        uploadArea.classList.remove("dragover");
-    });
-
-    uploadArea.addEventListener("drop", (e) => {
-        e.preventDefault();
-        uploadArea.classList.remove("dragover");
-        if (e.dataTransfer.files.length > 0) {
-            procesarImagen(e.dataTransfer.files[0]);
-        }
-    });
-
-    fileInput.addEventListener("change", (e) => {
-        if (e.target.files.length > 0) {
-            procesarImagen(e.target.files[0]);
-        }
-    });
-
-    btnRemove.addEventListener("click", (e) => {
-        e.stopPropagation();
-        fileInput.value = "";
-        previewContainer.style.display = "none";
-        imagePreview.src = "";
-        currentUploadedImageBase64 = "";
-        uploadPrompt.style.display = "block";
-        document.getElementById("productForm").reset();
-        showAIStatus("Imagen removida.", "info");
-    });
-
-    function procesarImagen(file) {
+    function procesarImagenPrincipal(file) {
         if (!file.type.startsWith("image/")) {
             alert("Por favor, sube una imagen válida.");
             return;
@@ -209,6 +226,65 @@ function setupImageUpload() {
 
             // Lanzar animación de escaneo e IA
             ejecutarAnalisisIA(file.name);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // EVENTOS SEGUNDA FOTO
+    if (uploadAreaSecond && fileInputSecond) {
+        uploadAreaSecond.addEventListener("click", () => {
+            if (previewContainerSecond.style.display !== "flex") {
+                fileInputSecond.click();
+            }
+        });
+
+        uploadAreaSecond.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            uploadAreaSecond.classList.add("dragover");
+        });
+
+        uploadAreaSecond.addEventListener("dragleave", () => {
+            uploadAreaSecond.classList.remove("dragover");
+        });
+
+        uploadAreaSecond.addEventListener("drop", (e) => {
+            e.preventDefault();
+            uploadAreaSecond.classList.remove("dragover");
+            if (e.dataTransfer.files.length > 0) {
+                procesarSegundaImagen(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInputSecond.addEventListener("change", (e) => {
+            if (e.target.files.length > 0) {
+                procesarSegundaImagen(e.target.files[0]);
+            }
+        });
+
+        if (btnRemoveSecond) {
+            btnRemoveSecond.addEventListener("click", (e) => {
+                e.stopPropagation();
+                fileInputSecond.value = "";
+                previewContainerSecond.style.display = "none";
+                imagePreviewSecond.src = "";
+                currentSecondUploadedImageBase64 = "";
+                uploadPromptSecond.style.display = "block";
+            });
+        }
+    }
+
+    function procesarSegundaImagen(file) {
+        if (!file.type.startsWith("image/")) {
+            alert("Por favor, sube una imagen válida para la segunda foto.");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            currentSecondUploadedImageBase64 = e.target.result;
+            imagePreviewSecond.src = currentSecondUploadedImageBase64;
+            previewContainerSecond.style.display = "flex";
+            uploadPromptSecond.style.display = "none";
         };
         reader.readAsDataURL(file);
     }
@@ -589,7 +665,7 @@ function cargarProductoParaEditar(id) {
     }
     renderToneChips();
 
-    // Cargar vista previa de imagen
+    // Cargar vista previa de Foto Principal
     const imagePreview = document.getElementById("imagePreview");
     const previewContainer = document.getElementById("previewContainer");
     const uploadPrompt = document.getElementById("uploadPrompt");
@@ -598,6 +674,21 @@ function cargarProductoParaEditar(id) {
         imagePreview.src = prod.img;
         previewContainer.style.display = "flex";
         uploadPrompt.style.display = "none";
+    }
+
+    // Cargar vista previa de Segunda Foto
+    const imagePreviewSecond = document.getElementById("imagePreviewSecond");
+    const previewContainerSecond = document.getElementById("previewContainerSecond");
+    const uploadPromptSecond = document.getElementById("uploadPromptSecond");
+    if (prod.images && prod.images.length > 0 && prod.images[0]) {
+        currentSecondUploadedImageBase64 = prod.images[0];
+        if (imagePreviewSecond) imagePreviewSecond.src = prod.images[0];
+        if (previewContainerSecond) previewContainerSecond.style.display = "flex";
+        if (uploadPromptSecond) uploadPromptSecond.style.display = "none";
+    } else {
+        currentSecondUploadedImageBase64 = "";
+        if (previewContainerSecond) previewContainerSecond.style.display = "none";
+        if (uploadPromptSecond) uploadPromptSecond.style.display = "block";
     }
 
     // Cambiar UI a modo edición
@@ -616,14 +707,24 @@ function cancelarEdicion() {
     document.getElementById("btnSubmitForm").textContent = "Guardar Producto ✨";
     document.getElementById("btnCancelEdit").style.display = "none";
     currentUploadedImageBase64 = "";
+    currentSecondUploadedImageBase64 = "";
     currentToneObjects = [];
     renderToneChips();
     
+    // Reset foto 1
     const previewContainer = document.getElementById("previewContainer");
     const uploadPrompt = document.getElementById("uploadPrompt");
     if (previewContainer && uploadPrompt) {
         previewContainer.style.display = "none";
         uploadPrompt.style.display = "block";
+    }
+
+    // Reset foto 2
+    const previewContainerSecond = document.getElementById("previewContainerSecond");
+    const uploadPromptSecond = document.getElementById("uploadPromptSecond");
+    if (previewContainerSecond && uploadPromptSecond) {
+        previewContainerSecond.style.display = "none";
+        uploadPromptSecond.style.display = "block";
     }
 }
 
@@ -655,11 +756,11 @@ function setupProductForm() {
         const stock = parseInt(document.getElementById("prodStock").value) || 1;
         const badge = document.getElementById("prodBadge").value || "";
         const extraImgsVal = document.getElementById("prodExtraImages") ? document.getElementById("prodExtraImages").value.trim() : "";
-        const extraImages = extraImgsVal ? extraImgsVal.split(",").map(s => s.trim()).filter(Boolean) : [];
+        let extraImages = extraImgsVal ? extraImgsVal.split(",").map(s => s.trim()).filter(Boolean) : [];
 
         const tonesStr = currentToneObjects.map(t => t.name).join(", ");
 
-        // Imagen principal
+        // Comprimir Foto 1
         let imgFinal = "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400";
         if (currentUploadedImageBase64) {
             try {
@@ -667,6 +768,18 @@ function setupProductForm() {
             } catch(e) {
                 imgFinal = currentUploadedImageBase64;
             }
+        }
+
+        // Comprimir Foto 2 si fue subida por archivo
+        if (currentSecondUploadedImageBase64) {
+            let imgSecondFinal = currentSecondUploadedImageBase64;
+            try {
+                imgSecondFinal = await comprimirImagen(currentSecondUploadedImageBase64, 300);
+            } catch(e) {
+                imgSecondFinal = currentSecondUploadedImageBase64;
+            }
+            // Asegurar que la 2da foto esté en primer lugar del arreglo de imágenes
+            extraImages = [imgSecondFinal, ...extraImages.filter(img => img !== imgSecondFinal)];
         }
 
         if (isEditing) {

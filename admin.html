@@ -1015,9 +1015,9 @@
 
             <div class="studio-grid">
 
-                <!-- Paso 01: Foto -->
+                <!-- Paso 01: Foto Principal y Segunda Foto -->
                 <div class="studio-col studio-col-photo">
-                    <span class="step-badge">01 · Foto</span>
+                    <span class="step-badge">01 · Foto Principal</span>
 
                     <div class="ai-badge">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
@@ -1027,19 +1027,31 @@
                     <div class="scanner-pod-wrap">
                         <div class="upload-area" id="uploadArea">
                             <div class="upload-preview-container" id="previewContainer">
-                                <img src="" alt="Vista previa" class="upload-preview" id="imagePreview">
-                                <button type="button" class="remove-preview-btn" id="btnRemovePreview" aria-label="Remover imagen">&times;</button>
+                                <img src="" alt="Vista previa principal" class="upload-preview" id="imagePreview">
+                                <button type="button" class="remove-preview-btn" id="btnRemovePreview" aria-label="Remover foto principal">&times;</button>
                             </div>
                             <div class="scan-overlay" id="scanOverlay">
                                 <div class="scan-line" id="scanLine"></div>
                             </div>
                             <span class="upload-icon">📸</span>
-                            <p class="upload-text" id="uploadPrompt">Arrastra la foto aquí o <span>haz clic para buscar</span></p>
+                            <p class="upload-text" id="uploadPrompt">Arrastra la <strong>Foto Principal</strong> aquí o <span>haz clic para buscar</span></p>
                             <input type="file" id="prodImageFile" accept="image/*" style="display: none;">
                         </div>
                     </div>
 
-                    <p class="ai-status-msg" id="aiStatusMsg"></p>
+                    <p class="ai-status-msg" id="aiStatusMsg" style="margin-bottom: 1rem;"></p>
+
+                    <!-- Segunda Foto (Carga directa por archivo/clic) -->
+                    <span class="step-badge" style="margin-top: 0.5rem;">01b · Segunda Foto (Hover / Ángulo)</span>
+                    <div class="upload-area upload-area-second" id="uploadAreaSecond" style="min-height: 120px; padding: 1.2rem 1rem;">
+                        <div class="upload-preview-container" id="previewContainerSecond">
+                            <img src="" alt="Vista previa 2da foto" class="upload-preview" id="imagePreviewSecond">
+                            <button type="button" class="remove-preview-btn" id="btnRemovePreviewSecond" aria-label="Remover 2da foto">&times;</button>
+                        </div>
+                        <span class="upload-icon" style="font-size: 1.6rem; margin-bottom: 0.4rem;">🖼️</span>
+                        <p class="upload-text" id="uploadPromptSecond" style="font-size: 0.8rem;">Arrastra la <strong>2da Foto</strong> aquí o <span>haz clic para seleccionar</span></p>
+                        <input type="file" id="prodSecondImageFile" accept="image/*" style="display: none;">
+                    </div>
                 </div>
 
                 <!-- Paso 02: Detalles -->
