@@ -225,22 +225,22 @@ async function cargarProductosDB() {
     // Filtrar los que fueron marcados como borrados
     dbProductos = dbProductos.filter(p => !localDeleted.includes(p.id));
 
-    // Agregar los productos añadidos desde admin, resolviendo marcadores de imagen
-    const localAddedResolved = localAdded.map(p => {
-        let imgFinal = p.img;
-        // Si la imagen es un marcador de sessionStorage, resolverla
+    // Agregar o actualizar los productos añadidos/editados desde admin
+    localAdded.forEach(localProd => {
+        let imgFinal = localProd.img;
         if (typeof imgFinal === "string" && imgFinal.startsWith("KARA_SESSIMG:")) {
             const imgId = imgFinal.replace("KARA_SESSIMG:", "");
             imgFinal = sessionStorage.getItem(`KARA_IMG_${imgId}`) || "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400";
         }
-        return { ...p, img: imgFinal };
+        const resolvedProd = { ...localProd, img: imgFinal };
+        
+        const idx = dbProductos.findIndex(p => p.id === resolvedProd.id);
+        if (idx !== -1) {
+            dbProductos[idx] = { ...dbProductos[idx], ...resolvedProd };
+        } else {
+            dbProductos.push(resolvedProd);
+        }
     });
-
-    // Agregar los que fueron añadidos, evitando IDs duplicados
-    // (los del admin tienen IDs >= 1001 por diseño, no deben colisionar)
-    const idsExistentes = new Set(dbProductos.map(p => p.id));
-    const addedSinDuplicar = localAddedResolved.filter(p => !idsExistentes.has(p.id));
-    dbProductos = [...dbProductos, ...addedSinDuplicar];
 }
 
 

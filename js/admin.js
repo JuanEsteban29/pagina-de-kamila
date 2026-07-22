@@ -1125,28 +1125,18 @@ async function guardarEnServidor(lista) {
 // 8. EXPORTACIÓN Y UTILIDADES
 // ==========================================
 function exportarJsonCompleto() {
-    // Limpiamos los productos para que no tengan imágenes base64 gigantes en el archivo JSON
-    // si el usuario prefiere subirlas en local. Si es base64, las guardará igual, pero es mejor avisar
-    // que idealmente las imágenes sean relativas
-    const catalogoExportable = catalogoCompleto.map(p => {
-        // Si la imagen es base64, sugerimos cambiarla por una ruta limpia local
-        let imgExport = p.img;
-        if (imgExport.startsWith("data:image/")) {
-            // Sugerir nombre corto como "assets/images/nuevo-producto.jpeg"
-            const extension = imgExport.substring("data:image/".length, imgExport.indexOf(";base64"));
-            const safeTitle = p.title.toLowerCase().replace(/[^a-z0-9]/g, "-");
-            imgExport = `assets/images/${safeTitle}.${extension}`;
-        }
-        return {
-            id: p.id,
-            title: p.title,
-            price: p.price,
-            category: p.category,
-            img: imgExport,
-            stock: p.stock || 1,
-            tones: p.tones || ""
-        };
-    });
+    const catalogoExportable = catalogoCompleto.map(p => ({
+        id: p.id,
+        title: p.title,
+        price: p.price,
+        category: p.category,
+        img: p.img,
+        images: p.images || [],
+        stock: p.stock !== undefined ? p.stock : 1,
+        tones: p.tones || "",
+        toneObjects: p.toneObjects || [],
+        badge: p.badge || ""
+    }));
 
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(catalogoExportable, null, 4));
     const downloadAnchor = document.createElement('a');
@@ -1156,7 +1146,7 @@ function exportarJsonCompleto() {
     downloadAnchor.click();
     downloadAnchor.remove();
 
-    mostrarNotificacion("Archivo productos.json listo. Guárdalo en la carpeta js/ 🥥");
+    mostrarNotificacion("Archivo productos.json respaldado. 🥥");
 }
 
 function mostrarNotificacion(msg) {
