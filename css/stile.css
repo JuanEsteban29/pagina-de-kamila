@@ -446,6 +446,119 @@ button {
     box-shadow: 0 8px 20px rgba(226, 41, 99, 0.38);
 }
 
+/* ==========================================================================
+   SECCIÓN DE SERVICIOS DE MAQUILLAJE EN HOME PAGE
+   ========================================================================== */
+.servicios-section {
+    padding-top: 3.5rem;
+    padding-bottom: 3.5rem;
+}
+
+.home-services-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+    margin-top: 1.5rem;
+}
+
+.home-service-card {
+    background: #FFFFFF;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+    transition: transform 0.4s ease, box-shadow 0.4s ease, border-color 0.4s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.home-service-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 45px rgba(164, 53, 232, 0.12);
+    border-color: rgba(164, 53, 232, 0.3);
+}
+
+.home-service-img-wrap {
+    position: relative;
+    height: 240px;
+    overflow: hidden;
+}
+
+.home-service-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s ease;
+}
+
+.home-service-card:hover .home-service-img-wrap img {
+    transform: scale(1.06);
+}
+
+.home-service-tag {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: rgba(15, 10, 20, 0.85);
+    backdrop-filter: blur(8px);
+    color: #FFFFFF;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 0.45rem 0.9rem;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.home-service-body {
+    padding: 1.8rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    justify-content: space-between;
+}
+
+.home-service-body h3 {
+    font-family: 'Bodoni Moda', serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.6rem;
+    color: var(--text-main);
+}
+
+.home-service-body p {
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+    margin-bottom: 1.4rem;
+}
+
+.home-service-body .btn-huda-primary {
+    width: 100%;
+    padding: 0.95rem;
+    border-radius: 25px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .home-services-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
+    }
+
+    .home-service-img-wrap {
+        height: 200px !important;
+    }
+
+    .home-service-body {
+        padding: 1.4rem !important;
+    }
+}
+
 /* ACTIONS */
 .header-actions { 
     display: flex; 

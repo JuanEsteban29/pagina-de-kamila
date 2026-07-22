@@ -532,15 +532,25 @@ function setupCoreEventListeners() {
         });
     }
 
-    // Filtrado por categoría[cite: 6]
+    // Filtrado por categoría
     document.querySelectorAll(".category-card").forEach(card => {
         card.addEventListener("click", () => {
-            const cat = card.dataset.category; //[cite: 6]
+            const cat = card.dataset.category;
+            if (cat === "maquillaje") {
+                const serviciosSec = document.getElementById("servicios");
+                if (serviciosSec) {
+                    serviciosSec.scrollIntoView({ behavior: "smooth" });
+                } else {
+                    const servicesModal = document.getElementById("servicesModal");
+                    if (servicesModal) servicesModal.style.display = "flex";
+                }
+                return;
+            }
             const filtrados = dbProductos.filter(p =>
-                p.category.toLowerCase() === cat.toLowerCase()
-            ); //[cite: 6]
-            renderProductos(filtrados); //[cite: 6]
-            document.getElementById("productos").scrollIntoView({ behavior: "smooth" }); //[cite: 6]
+                p.category && p.category.toLowerCase() === cat.toLowerCase()
+            );
+            renderProductos(filtrados);
+            document.getElementById("productos").scrollIntoView({ behavior: "smooth" });
         });
     });
 
@@ -634,6 +644,24 @@ function setupServicesDropdown() {
             if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
                 seleccionar();
+            }
+        });
+    });
+
+    // Conectar las tarjetas de la sección de la página principal con el modal
+    const homeServiceElements = document.querySelectorAll(".home-service-card, .btn-book-service");
+    homeServiceElements.forEach(el => {
+        el.addEventListener("click", (e) => {
+            const lookToSelect = el.dataset.look || el.closest(".home-service-card")?.dataset.look;
+            if (servicesModal) {
+                servicesModal.style.display = "flex";
+                if (lookToSelect) {
+                    lookCards.forEach(c => {
+                        if (c.dataset.look === lookToSelect) {
+                            c.click();
+                        }
+                    });
+                }
             }
         });
     });
