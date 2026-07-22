@@ -537,13 +537,8 @@ function setupCoreEventListeners() {
         card.addEventListener("click", () => {
             const cat = card.dataset.category;
             if (cat === "maquillaje") {
-                const serviciosSec = document.getElementById("servicios");
-                if (serviciosSec) {
-                    serviciosSec.scrollIntoView({ behavior: "smooth" });
-                } else {
-                    const servicesModal = document.getElementById("servicesModal");
-                    if (servicesModal) servicesModal.style.display = "flex";
-                }
+                const servicesModal = document.getElementById("servicesModal");
+                if (servicesModal) servicesModal.style.display = "flex";
                 return;
             }
             const filtrados = dbProductos.filter(p =>
