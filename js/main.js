@@ -1216,23 +1216,9 @@ function initGSAP() {
         }); //[cite: 6]
     });
 
-    gsap.utils.toArray(".category-card").forEach((card, i) => {
-        gsap.fromTo(card,
-            { opacity: 0, scale: 0.92, y: 30 },
-            {
-                opacity: 1,
-                scale: 1,
-                y: 0,
-                duration: 0.75,
-                ease: "power3.out",
-                delay: i * 0.12,
-                scrollTrigger: {
-                    trigger: card,
-                    start: "top 88%",
-                    toggleActions: "play none none none",
-                }
-            }
-        ); //[cite: 6]
+    document.querySelectorAll(".category-card").forEach(card => {
+        card.style.opacity = "1";
+        card.style.transform = "none";
     });
 
     animateProductCards(); //[cite: 6]

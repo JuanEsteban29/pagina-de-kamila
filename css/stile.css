@@ -775,7 +775,8 @@ button {
     position: relative; 
     overflow: hidden; 
     cursor: pointer;
-    transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    will-change: transform;
 }
 
 .category-card::before {
