@@ -91,7 +91,7 @@ img {
     left: 0;
     width: 100%;
     height: var(--announce-h);
-    background: #6E382A;
+    background: #A45C4B;
     color: #FFFFFF;
     display: flex;
     align-items: center;
@@ -1914,7 +1914,7 @@ img {
    MARQUEE TICKER
    ========================================================================== */
 .marquee-strip {
-    background: #6E382A;
+    background: #A45C4B;
     padding: 0.9rem 0;
     overflow: hidden;
     white-space: nowrap;
