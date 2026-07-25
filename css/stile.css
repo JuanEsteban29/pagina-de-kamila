@@ -1910,21 +1910,23 @@ img {
 }
 
 .marquee-track span {
-    font-size: 0.72rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.95rem;
+    letter-spacing: 2px;
+    color: #FFFFFF !important;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 2.5px;
-    color: #FFFFFF;
-    font-weight: 600;
     flex-shrink: 0;
 }
 
 .marquee-track span:nth-child(even) {
-    color: #FF66B2;
+    color: #FFFFFF !important;
     font-style: italic;
     font-family: 'Cormorant Garamond', serif;
-    font-size: 0.85rem;
-    letter-spacing: 1px;
-    font-weight: 400;
+    font-size: 0.95rem;
+    letter-spacing: 2px;
+    font-weight: 500;
 }
 
 @keyframes marqueeScroll {
