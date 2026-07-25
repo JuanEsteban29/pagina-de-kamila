@@ -114,7 +114,7 @@ img {
    HEADER (Translucent & Minimalist)
    ========================================================================== */
 .main-header {
-    background: linear-gradient(90deg, #C51F51 0%, #EC1C80 50%, #FF66B2 100%) !important;
+    background: linear-gradient(90deg, #C51F51 0%, #E9AE52 100%) !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
     position: fixed;
     top: var(--announce-h);
@@ -1707,7 +1707,7 @@ img {
     flex-direction: column;
     justify-content: center;
     padding: 5rem 4rem 5rem 5rem;
-    background: linear-gradient(135deg, #C51F51 0%, #EC1C80 50%, #FF66B2 100%);
+    background: linear-gradient(135deg, #C51F51 0%, #E9AE52 100%);
     position: relative;
     z-index: 2;
 }
@@ -1919,7 +1919,7 @@ img {
 }
 
 .marquee-track span:nth-child(even) {
-    color: var(--gold-glow);
+    color: #FF66B2;
     font-style: italic;
     font-family: 'Cormorant Garamond', serif;
     font-size: 0.85rem;
