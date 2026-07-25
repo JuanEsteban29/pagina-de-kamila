@@ -91,20 +91,27 @@ img {
     left: 0;
     width: 100%;
     height: var(--announce-h);
-    background: #0D0D0D;
+    background: #3B1C16;
     color: #FFFFFF;
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 1001;
     padding: 0 1rem;
-    font-size: 0.75rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.95rem;
     font-weight: 500;
     letter-spacing: 2px;
     text-transform: uppercase;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .announcement-bar p {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.95rem;
+    letter-spacing: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
