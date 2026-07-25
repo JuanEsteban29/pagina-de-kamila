@@ -1895,11 +1895,12 @@ img {
    MARQUEE TICKER
    ========================================================================== */
 .marquee-strip {
-    background: #000000;
+    background: #3B1C16;
     padding: 0.9rem 0;
     overflow: hidden;
     white-space: nowrap;
-    border-top: 1px solid #1a1a1a;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
 }
 
 .marquee-track {
