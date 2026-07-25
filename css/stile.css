@@ -33,7 +33,7 @@ html {
 }
 
 body {
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Cormorant Garamond', serif;
     background-color: var(--bg-main);
     color: var(--text-main);
     overflow-x: hidden;
@@ -155,11 +155,11 @@ img {
 }
 
 .main-header .logo-text {
-    font-family: 'Playfair Display', serif !important;
+    font-family: 'Cormorant Garamond', serif !important;
     color: #ffffff !important;
     font-weight: 700 !important;
-    font-size: 1.6rem !important;
-    letter-spacing: 3px !important;
+    font-size: 1.7rem !important;
+    letter-spacing: 4px !important;
 }
 
 .nav-menu { 
@@ -170,15 +170,16 @@ img {
 
 .main-header .nav-link,
 .main-header .nav-services-btn {
+    font-family: 'Cormorant Garamond', serif !important;
     color: #FFFFFF !important;
     background-color: transparent !important;
     border: none !important;
     border-radius: 0 !important;
     padding: 0.5rem 1rem !important;
-    font-weight: 600 !important;
-    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    font-size: 1.05rem !important;
     text-transform: uppercase !important;
-    letter-spacing: 2px !important;
+    letter-spacing: 2.5px !important;
     position: relative;
     transition: all 0.3s ease !important;
     display: flex;
