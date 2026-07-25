@@ -1694,15 +1694,7 @@ button {
 }
 
 .hero-left::after {
-    content: '';
-    position: absolute;
-    right: -40px;
-    top: 0;
-    width: 80px;
-    height: 100%;
-    background: linear-gradient(135deg, #C51F51 0%, #E9AE52 100%);
-    clip-path: polygon(0 0, 0% 100%, 100% 100%);
-    z-index: 3;
+    display: none !important;
 }
 
 .hero-eyebrow {
