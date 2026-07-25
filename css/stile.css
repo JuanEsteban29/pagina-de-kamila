@@ -14,7 +14,7 @@
     --shadow-color: rgba(226, 41, 99, 0.08);
     --glass-bg: rgba(255, 255, 255, 0.85);
     --glass-border: rgba(255, 255, 255, 0.2);
-    --gold-glow: #E9AE52;
+    --gold-glow: #FF66B2;
     --announce-h: 38px;
     --header-h: 72px;
 }
@@ -39,6 +39,8 @@ body {
     overflow-x: hidden;
     position: relative;
     letter-spacing: 0.2px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
 }
 
 .container {
@@ -62,6 +64,24 @@ button {
     outline: none;
 }
 
+img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #F1F1F1;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 4px;
+}
+
 /* ==========================================================================
    BARRA DE ANUNCIO (estilo Huda Beauty)
    ========================================================================== */
@@ -71,21 +91,20 @@ button {
     left: 0;
     width: 100%;
     height: var(--announce-h);
-    background: #000000;
+    background: #0D0D0D;
     color: #FFFFFF;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1002;
+    z-index: 1001;
     padding: 0 1rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
 .announcement-bar p {
-    font-size: 0.68rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -95,7 +114,7 @@ button {
    HEADER (Translucent & Minimalist)
    ========================================================================== */
 .main-header {
-    background: linear-gradient(90deg, #C51F51 0%, #E9AE52 100%) !important;
+    background: linear-gradient(90deg, #C51F51 0%, #EC1C80 50%, #FF66B2 100%) !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
     position: fixed;
     top: var(--announce-h);
@@ -1688,7 +1707,7 @@ button {
     flex-direction: column;
     justify-content: center;
     padding: 5rem 4rem 5rem 5rem;
-    background: linear-gradient(135deg, #C51F51 0%, #E9AE52 100%);
+    background: linear-gradient(135deg, #C51F51 0%, #EC1C80 50%, #FF66B2 100%);
     position: relative;
     z-index: 2;
 }
