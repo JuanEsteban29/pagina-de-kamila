@@ -1725,11 +1725,13 @@ img {
 }
 
 .hero-eyebrow {
-    font-size: 0.72rem;
+    font-family: 'Cormorant Garamond', serif !important;
+    font-style: italic;
+    font-size: 0.95rem;
     text-transform: uppercase;
     letter-spacing: 4px;
-    color: rgba(255,255,255,0.75);
-    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    font-weight: 500;
     margin-bottom: 2rem;
     display: block;
 }
@@ -1737,7 +1739,7 @@ img {
 .hero-title {
     font-family: 'Cormorant Garamond', serif !important;
     font-size: 4.5rem !important;
-    font-weight: 300 !important;
+    font-weight: 400 !important;
     line-height: 1.05 !important;
     color: #FFFFFF;
     margin-bottom: 1.8rem;
@@ -1745,18 +1747,21 @@ img {
 }
 
 .hero-title em {
+    font-family: 'Cormorant Garamond', serif !important;
     font-style: italic;
     font-weight: 400;
-    color: rgba(255,255,255,0.9);
+    color: #FFFFFF;
 }
 
 .hero-text {
-    font-size: 0.92rem;
-    line-height: 1.8;
-    color: rgba(255,255,255,0.8);
+    font-family: 'Cormorant Garamond', serif !important;
+    font-size: 1.15rem;
+    font-style: italic;
+    line-height: 1.7;
+    color: rgba(255,255,255,0.9);
     margin-bottom: 2.5rem;
-    max-width: 380px;
-    letter-spacing: 0.3px;
+    max-width: 420px;
+    letter-spacing: 0.5px;
 }
 
 .hero-actions {
@@ -1772,9 +1777,11 @@ img {
     justify-content: center;
     background: #FFFFFF;
     color: #000000;
+    font-family: 'Cormorant Garamond', serif !important;
+    font-style: italic;
     font-weight: 700;
     padding: 1rem 2.2rem;
-    font-size: 0.78rem;
+    font-size: 0.95rem;
     text-transform: uppercase;
     letter-spacing: 2.5px;
     border: 2px solid #FFFFFF;
@@ -1794,9 +1801,11 @@ img {
     justify-content: center;
     background: transparent;
     color: #FFFFFF;
+    font-family: 'Cormorant Garamond', serif !important;
+    font-style: italic;
     font-weight: 700;
     padding: 1rem 2.2rem;
-    font-size: 0.78rem;
+    font-size: 0.95rem;
     text-transform: uppercase;
     letter-spacing: 2.5px;
     border: 2px solid rgba(255,255,255,0.6);
@@ -1825,18 +1834,20 @@ img {
 }
 
 .stat-num {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.5rem;
+    font-family: 'Cormorant Garamond', serif !important;
+    font-size: 1.8rem;
     font-weight: 600;
     color: #FFFFFF;
     line-height: 1;
 }
 
 .stat-label {
-    font-size: 0.65rem;
+    font-family: 'Cormorant Garamond', serif !important;
+    font-style: italic;
+    font-size: 0.85rem;
     text-transform: uppercase;
     letter-spacing: 2px;
-    color: rgba(255,255,255,0.65);
+    color: rgba(255,255,255,0.85);
     font-weight: 600;
 }
 
