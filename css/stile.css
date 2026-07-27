@@ -91,14 +91,23 @@ img {
     left: 0;
     width: 100%;
     height: var(--announce-h);
-    background: linear-gradient(90deg, #C51F51 0%, #E9AE52 100%) !important;
-    color: #FFFFFF !important;
+    background: #0D0D0D;
+    color: #FFFFFF;
     display: flex;
     align-items: center;
+    justify-content: center;
     z-index: 1001;
+    padding: 0 1rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.announcement-bar p {
     white-space: nowrap;
     overflow: hidden;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    text-overflow: ellipsis;
 }
 
 /* ==========================================================================
