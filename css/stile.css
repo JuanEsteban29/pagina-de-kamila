@@ -91,31 +91,14 @@ img {
     left: 0;
     width: 100%;
     height: var(--announce-h);
-    background: #C51F51 !important;
+    background: linear-gradient(90deg, #C51F51 0%, #E9AE52 100%) !important;
     color: #FFFFFF !important;
     display: flex;
     align-items: center;
-    justify-content: center;
     z-index: 1001;
-    padding: 0 1rem;
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-size: 0.95rem;
-    font-weight: 600;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.announcement-bar p {
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-size: 0.95rem;
-    letter-spacing: 2px;
-    color: #FFFFFF !important;
     white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 /* ==========================================================================
