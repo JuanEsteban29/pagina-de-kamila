@@ -91,8 +91,8 @@ img {
     left: 0;
     width: 100%;
     height: var(--announce-h);
-    background: #A45C4B;
-    color: #FFFFFF;
+    background: #FFFFFF !important;
+    color: #000000 !important;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -101,10 +101,10 @@ img {
     font-family: 'Cormorant Garamond', serif;
     font-style: italic;
     font-size: 0.95rem;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: 2px;
     text-transform: uppercase;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .announcement-bar p {
@@ -112,6 +112,7 @@ img {
     font-style: italic;
     font-size: 0.95rem;
     letter-spacing: 2px;
+    color: #000000 !important;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1914,12 +1915,12 @@ img {
    MARQUEE TICKER
    ========================================================================== */
 .marquee-strip {
-    background: #A45C4B;
+    background: #FFFFFF !important;
     padding: 0.9rem 0;
     overflow: hidden;
     white-space: nowrap;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .marquee-track {
@@ -1934,19 +1935,19 @@ img {
     font-style: italic;
     font-size: 0.95rem;
     letter-spacing: 2px;
-    color: #FFFFFF !important;
-    font-weight: 500;
+    color: #000000 !important;
+    font-weight: 600;
     text-transform: uppercase;
     flex-shrink: 0;
 }
 
 .marquee-track span:nth-child(even) {
-    color: #FFFFFF !important;
+    color: #000000 !important;
     font-style: italic;
     font-family: 'Cormorant Garamond', serif;
     font-size: 0.95rem;
     letter-spacing: 2px;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 @keyframes marqueeScroll {
