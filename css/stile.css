@@ -1915,7 +1915,7 @@ img {
    MARQUEE TICKER
    ========================================================================== */
 .marquee-strip {
-    background: linear-gradient(90deg, #C51F51 0%, #E09E38 50%, #E9AE52 100%) !important;
+    background: linear-gradient(90deg, #C51F51 0%, #E9AE52 100%) !important;
     padding: 0.9rem 0;
     overflow: hidden;
     white-space: nowrap;
