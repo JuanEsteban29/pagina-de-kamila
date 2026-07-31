@@ -319,7 +319,12 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Iniciar servidor Express
-app.listen(PORT, () => {
-    console.log(`[KARA Server] Servidor Express corriendo en el puerto ${PORT} 🚀`);
-});
+// Exportar la aplicación para compatibilidad con Vercel
+module.exports = app;
+
+// Iniciar servidor Express en entornos tradicionales (Local, Railway, etc.)
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`[KARA Server] Servidor Express corriendo en el puerto ${PORT} 🚀`);
+    });
+}
