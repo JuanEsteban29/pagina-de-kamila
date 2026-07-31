@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin.html
 
-Sitemap: https://pagina-de-kamila-production.up.railway.app/sitemap.xml
+Sitemap: https://karasunset.com/sitemap.xml
