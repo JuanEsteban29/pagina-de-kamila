@@ -218,14 +218,22 @@ async function cargarProductosDB() {
         dbProductos = [...dbProductosFallback];
     }
 
-    // Cargar adiciones y eliminaciones locales hechas desde admin
+    // Cargar adiciones, actualizaciones y eliminaciones locales hechas desde admin
     const localAdded = JSON.parse(localStorage.getItem('KARA_ADMIN_ADDED')) || [];
+    const localUpdated = JSON.parse(localStorage.getItem('KARA_ADMIN_UPDATED')) || {};
     const localDeleted = JSON.parse(localStorage.getItem('KARA_ADMIN_DELETED')) || [];
 
     // Filtrar los que fueron marcados como borrados
-    dbProductos = dbProductos.filter(p => !localDeleted.includes(p.id));
+    const deletedSet = new Set(localDeleted.map(Number));
+    dbProductos = dbProductos.filter(p => !deletedSet.has(Number(p.id)));
 
-    // Agregar o actualizar los productos añadidos/editados desde admin
+    // Aplicar actualizaciones sobre los productos existentes
+    dbProductos = dbProductos.map(p => {
+        const key = String(p.id);
+        return localUpdated[key] ? { ...p, ...localUpdated[key] } : p;
+    });
+
+    // Agregar o actualizar los productos añadidos desde admin
     localAdded.forEach(localProd => {
         let imgFinal = localProd.img;
         if (typeof imgFinal === "string" && imgFinal.startsWith("KARA_SESSIMG:")) {
@@ -234,7 +242,7 @@ async function cargarProductosDB() {
         }
         const resolvedProd = { ...localProd, img: imgFinal };
         
-        const idx = dbProductos.findIndex(p => p.id === resolvedProd.id);
+        const idx = dbProductos.findIndex(p => Number(p.id) === Number(resolvedProd.id));
         if (idx !== -1) {
             dbProductos[idx] = { ...dbProductos[idx], ...resolvedProd };
         } else {

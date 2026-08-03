@@ -1,20 +1,31 @@
 /**
  * KARA Makeup — Back-Office & AI Image Cataloging Logic
  * =======================================================
+ * Refactored & Stabilized CRUD Engine (Create, Edit, Delete, Sync)
  */
 
-// Contraseña sencilla para el panel de Kamila
+// Contraseña de acceso
 const CONTRASEÑA_CORRECTA = "KARA2026";
 
-// Estado global del catálogo en administración
+// Estado global de Administración y CRUD
+let editingProductId = null; // null = Modo Creación | ID = Modo Edición
 let catalogoCompleto = [];
 let localAddedProducts = JSON.parse(localStorage.getItem('KARA_ADMIN_ADDED')) || [];
+let localUpdatedProducts = JSON.parse(localStorage.getItem('KARA_ADMIN_UPDATED')) || {};
 let localDeletedIds = JSON.parse(localStorage.getItem('KARA_ADMIN_DELETED')) || [];
 let serverSyncActive = false;
 let tfModel = null;
+
+// Manejo de Imágenes de Producto (Búferes de subida)
 let currentUploadedImageBase64 = "";
 let currentSecondUploadedImageBase64 = "";
+let editingOriginalImg = "";
+let editingOriginalImages = [];
 
+// Estado del Creador de Tonos
+let currentToneObjects = [];
+
+// Inicialización cuando el DOM esté listo
 document.addEventListener("DOMContentLoaded", () => {
     initAdmin();
 });
@@ -23,12 +34,15 @@ async function initAdmin() {
     setupPassGate();
     setupDynamicGreeting();
     setupImageUpload();
+    setupToneBuilder();
     setupProductForm();
+    setupCatalogListDelegation();
     await setupSyncMode();
     loadAIModel();
     await loadCatalog();
 }
 
+// Saludo dinámico según hora local
 function setupDynamicGreeting() {
     const greetingElem = document.getElementById("adminGreeting");
     if (!greetingElem) return;
@@ -58,12 +72,11 @@ function setupPassGate() {
     if (!loginScreen || !loginForm || !passInput) return;
 
     const isAuth = sessionStorage.getItem('KARA_ADMIN_AUTH') === 'true';
-
     if (isAuth) {
         loginScreen.style.display = "none";
     } else {
         loginScreen.style.display = "flex";
-        setTimeout(() => passInput.focus(), 300);
+        passInput.focus();
     }
 
     loginForm.addEventListener("submit", (e) => {
@@ -73,17 +86,25 @@ function setupPassGate() {
         if (enteredPass === CONTRASEÑA_CORRECTA) {
             sessionStorage.setItem('KARA_ADMIN_AUTH', 'true');
             if (errorMsg) errorMsg.style.display = "none";
-            loginScreen.style.display = "none";
-            mostrarNotificacion("¡Acceso concedido! Bienvenida Kamila ✨");
+
+            loginScreen.style.opacity = "0";
+            setTimeout(() => {
+                loginScreen.style.display = "none";
+                loginScreen.style.opacity = "1";
+            }, 300);
+
+            mostrarNotificacion("Bienvenida, Kamila. Sesión iniciada. 🌸");
         } else {
-            if (errorMsg) errorMsg.style.display = "block";
+            if (errorMsg) {
+                errorMsg.textContent = "Contraseña incorrecta. Por favor intenta de nuevo.";
+                errorMsg.style.display = "block";
+            }
             passInput.value = "";
             passInput.focus();
+
             const box = loginScreen.querySelector(".login-box");
-            if (box) {
-                box.style.animation = "none";
-                box.offsetHeight; // Reflow
-                box.style.animation = "loginShake 0.4s ease";
+            if (box && typeof gsap !== "undefined") {
+                gsap.fromTo(box, { x: -10 }, { x: 10, duration: 0.08, repeat: 5, yoyo: true });
             }
         }
     });
@@ -97,7 +118,7 @@ function setupPassGate() {
 }
 
 // ==========================================
-// 2. MODO DE SINCRONIZACIÓN (SERVIDOR VS ESTÁTICO)
+// 2. DETECCIÓN DE MODO DE SINCRONIZACIÓN
 // ==========================================
 async function setupSyncMode() {
     const modeText = document.getElementById("syncModeText");
@@ -105,77 +126,73 @@ async function setupSyncMode() {
     const exportBtn = document.getElementById("btnExportJSON");
 
     try {
-        const res = await fetch("/api/ping");
+        const res = await fetch("/api/ping", { cache: "no-store" });
         if (res.ok) {
             serverSyncActive = true;
-            if (modeText) {
-                modeText.textContent = "Conexión local: SERVIDOR ACTIVO 🚀";
-                if (modeText.parentElement) {
-                    modeText.parentElement.style.backgroundColor = "#F2FFF5";
-                    modeText.parentElement.style.borderColor = "rgba(37, 211, 102, 0.2)";
-                    modeText.parentElement.style.color = "#1E6B34";
-                }
-            }
-            if (descText) descText.textContent = "Los cambios se guardan automáticamente en js/productos.json en tiempo real.";
-            if (exportBtn) exportBtn.style.display = "none";
+            if (modeText) modeText.innerHTML = `🟢 <strong>Servidor KARA Activo</strong>`;
+            if (descText) descText.textContent = "Los cambios se guardan directamente en el servidor y la base de datos MySQL.";
+            if (exportBtn) exportBtn.textContent = "📦 Respaldar JSON";
         } else {
-            throw new Error("No server endpoint");
+            throw new Error("No ping OK");
         }
     } catch (e) {
         serverSyncActive = false;
-        if (modeText) modeText.textContent = "Conexión local: MODO HOSTING ESTÁTICO 🥥";
-        if (descText) descText.textContent = "Los cambios se guardan localmente en tu navegador.";
-        if (exportBtn) exportBtn.style.display = "inline-flex";
+        if (modeText) modeText.innerHTML = `🟠 <strong>Modo Local / Estático Activo</strong>`;
+        if (descText) descText.textContent = "Sin servidor detectado. Los cambios se guardan localmente en tu navegador.";
+        if (exportBtn) exportBtn.textContent = "📥 Exportar productos.json";
     }
 
-    if (exportBtn) {
+    if (exportBtn && !exportBtn.dataset.listened) {
+        exportBtn.dataset.listened = "true";
         exportBtn.addEventListener("click", exportarJsonCompleto);
     }
 }
 
 // ==========================================
-// 3. CARGA DE MODELO IA TENSORFLOW.JS (MOBILENET)
+// 3. IA CON TENSORFLOW.JS (MOBILENET)
 // ==========================================
 function loadAIModel() {
-    const aiStatusMsg = document.getElementById("aiStatusMsg");
-    showAIStatus("Inicializando Inteligencia Artificial...", "loading");
-
     let retries = 0;
     const checkInterval = setInterval(() => {
-        retries++;
-        if (window.tf && window.mobilenet) {
+        if (typeof mobilenet !== "undefined") {
             clearInterval(checkInterval);
-            mobilenet.load().then(model => {
-                tfModel = model;
-                showAIStatus("Inteligencia Artificial lista para escanear. ✨", "success");
-            }).catch(err => {
-                console.error("Error al cargar MobileNet:", err);
-                showAIStatus("Modo manual activo.", "info");
-            });
-        } else if (retries >= 6) { // máximo 3 segundos de espera
-            clearInterval(checkInterval);
-            showAIStatus("Modo catalogación manual listo. ✨", "info");
+            showAIStatus("🧠 Inicializando IA visión...", "info");
+            mobilenet.load({ version: 2, alpha: 1.0 })
+                .then(model => {
+                    tfModel = model;
+                    showAIStatus("✨ IA Visión lista para auto-detectar productos", "success");
+                })
+                .catch(err => {
+                    console.warn("[KARA AI] Error cargando modelo MobileNet:", err);
+                    showAIStatus("⚡ IA limitada (detección heurística activa)", "warning");
+                });
+        } else {
+            retries++;
+            if (retries > 30) {
+                clearInterval(checkInterval);
+                showAIStatus("⚡ Detección por nombre de archivo activa", "warning");
+            }
         }
-    }, 500);
+    }, 200);
 }
 
 function showAIStatus(msg, type = "info") {
     const statusMsg = document.getElementById("aiStatusMsg");
     if (!statusMsg) return;
+
     statusMsg.textContent = msg;
+    statusMsg.className = "ai-status-msg " + type;
+
     if (type === "success") {
-        statusMsg.style.color = "var(--success)";
-    } else if (type === "error") {
-        statusMsg.style.color = "var(--danger)";
-    } else if (type === "loading") {
-        statusMsg.style.color = "var(--primary)";
-    } else {
-        statusMsg.style.color = "var(--text-muted)";
+        setTimeout(() => {
+            statusMsg.textContent = "✨ Arrastra una foto para autocompletar categoría y tonos";
+            statusMsg.className = "ai-status-msg info";
+        }, 5000);
     }
 }
 
 // ==========================================
-// 4. CARGA DE IMÁGENES Y ANÁLISIS IA
+// 4. SUBIDA Y VISTA PREVIA DE IMÁGENES
 // ==========================================
 function setupImageUpload() {
     // Foto Principal
@@ -196,20 +213,26 @@ function setupImageUpload() {
     const uploadPromptSecond = document.getElementById("uploadPromptSecond");
     const btnPickSecond = document.getElementById("btnPickSecondImage");
 
-    // EVENTOS FOTO PRINCIPAL
+    if (btnPickMain && fileInput) {
+        btnPickMain.addEventListener("click", (e) => {
+            e.stopPropagation();
+            fileInput.click();
+        });
+    }
+
+    if (btnPickSecond && fileInputSecond) {
+        btnPickSecond.addEventListener("click", (e) => {
+            e.stopPropagation();
+            fileInputSecond.click();
+        });
+    }
+
     if (uploadArea && fileInput) {
         uploadArea.addEventListener("click", (e) => {
-            if (e.target !== btnRemove && !btnRemove?.contains(e.target)) {
+            if (e.target !== btnPickMain && e.target !== btnRemove) {
                 fileInput.click();
             }
         });
-
-        if (btnPickMain) {
-            btnPickMain.addEventListener("click", (e) => {
-                e.stopPropagation();
-                fileInput.click();
-            });
-        }
 
         uploadArea.addEventListener("dragover", (e) => {
             e.preventDefault();
@@ -223,65 +246,37 @@ function setupImageUpload() {
         uploadArea.addEventListener("drop", (e) => {
             e.preventDefault();
             uploadArea.classList.remove("dragover");
-            if (e.dataTransfer.files.length > 0) {
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
                 procesarImagenPrincipal(e.dataTransfer.files[0]);
             }
         });
 
-        fileInput.addEventListener("change", (e) => {
-            if (e.target.files.length > 0) {
-                procesarImagenPrincipal(e.target.files[0]);
+        fileInput.addEventListener("change", () => {
+            if (fileInput.files && fileInput.files[0]) {
+                procesarImagenPrincipal(fileInput.files[0]);
             }
         });
-
-        if (btnRemove) {
-            btnRemove.addEventListener("click", (e) => {
-                e.stopPropagation();
-                fileInput.value = "";
-                previewContainer.style.display = "none";
-                imagePreview.src = "";
-                currentUploadedImageBase64 = "";
-                uploadPrompt.style.display = "block";
-                if (btnPickMain) btnPickMain.style.display = "inline-block";
-                showAIStatus("Foto principal removida.", "info");
-            });
-        }
     }
 
-    function procesarImagenPrincipal(file) {
-        if (!file || !file.type.startsWith("image/")) {
-            alert("Por favor, selecciona un archivo de imagen válido (JPEG, PNG, WEBP).");
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            currentUploadedImageBase64 = e.target.result;
-            imagePreview.src = currentUploadedImageBase64;
-            previewContainer.style.display = "flex";
-            uploadPrompt.style.display = "none";
-            if (btnPickMain) btnPickMain.style.display = "none";
-
-            // Lanzar animación de escaneo e IA
-            ejecutarAnalisisIA(file.name);
-        };
-        reader.readAsDataURL(file);
+    if (btnRemove) {
+        btnRemove.addEventListener("click", (e) => {
+            e.stopPropagation();
+            currentUploadedImageBase64 = "";
+            editingOriginalImg = "";
+            if (imagePreview) imagePreview.src = "";
+            if (previewContainer) previewContainer.style.display = "none";
+            if (uploadPrompt) uploadPrompt.style.display = "block";
+            if (btnPickMain) btnPickMain.style.display = "inline-block";
+            if (fileInput) fileInput.value = "";
+        });
     }
 
-    // EVENTOS SEGUNDA FOTO
     if (uploadAreaSecond && fileInputSecond) {
         uploadAreaSecond.addEventListener("click", (e) => {
-            if (e.target !== btnRemoveSecond && !btnRemoveSecond?.contains(e.target)) {
+            if (e.target !== btnPickSecond && e.target !== btnRemoveSecond) {
                 fileInputSecond.click();
             }
         });
-
-        if (btnPickSecond) {
-            btnPickSecond.addEventListener("click", (e) => {
-                e.stopPropagation();
-                fileInputSecond.click();
-            });
-        }
 
         uploadAreaSecond.addEventListener("dragover", (e) => {
             e.preventDefault();
@@ -295,201 +290,140 @@ function setupImageUpload() {
         uploadAreaSecond.addEventListener("drop", (e) => {
             e.preventDefault();
             uploadAreaSecond.classList.remove("dragover");
-            if (e.dataTransfer.files.length > 0) {
+            if (e.dataTransfer.files && e.dataTransfer.files[0]) {
                 procesarSegundaImagen(e.dataTransfer.files[0]);
             }
         });
 
-        fileInputSecond.addEventListener("change", (e) => {
-            if (e.target.files.length > 0) {
-                procesarSegundaImagen(e.target.files[0]);
+        fileInputSecond.addEventListener("change", () => {
+            if (fileInputSecond.files && fileInputSecond.files[0]) {
+                procesarSegundaImagen(fileInputSecond.files[0]);
             }
         });
+    }
 
-        if (btnRemoveSecond) {
-            btnRemoveSecond.addEventListener("click", (e) => {
-                e.stopPropagation();
-                fileInputSecond.value = "";
-                previewContainerSecond.style.display = "none";
-                imagePreviewSecond.src = "";
-                currentSecondUploadedImageBase64 = "";
-                uploadPromptSecond.style.display = "block";
-                if (btnPickSecond) btnPickSecond.style.display = "inline-block";
-            });
+    if (btnRemoveSecond) {
+        btnRemoveSecond.addEventListener("click", (e) => {
+            e.stopPropagation();
+            currentSecondUploadedImageBase64 = "";
+            if (editingOriginalImages.length > 0) {
+                editingOriginalImages.shift();
+            }
+            if (imagePreviewSecond) imagePreviewSecond.src = "";
+            if (previewContainerSecond) previewContainerSecond.style.display = "none";
+            if (uploadPromptSecond) uploadPromptSecond.style.display = "block";
+            if (btnPickSecond) btnPickSecond.style.display = "inline-block";
+            if (fileInputSecond) fileInputSecond.value = "";
+        });
+    }
+
+    function procesarImagenPrincipal(file) {
+        if (!file.type.startsWith("image/")) {
+            alert("Por favor selecciona un archivo de imagen válido.");
+            return;
         }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            currentUploadedImageBase64 = e.target.result;
+            if (imagePreview) imagePreview.src = currentUploadedImageBase64;
+            if (previewContainer) previewContainer.style.display = "flex";
+            if (uploadPrompt) uploadPrompt.style.display = "none";
+            if (btnPickMain) btnPickMain.style.display = "none";
+
+            ejecutarAnalisisIA(file.name);
+        };
+        reader.readAsDataURL(file);
     }
 
     function procesarSegundaImagen(file) {
-        if (!file || !file.type.startsWith("image/")) {
-            alert("Por favor, selecciona una imagen válida para la segunda foto.");
+        if (!file.type.startsWith("image/")) {
+            alert("Por favor selecciona un archivo de imagen válido para la 2da foto.");
             return;
         }
 
         const reader = new FileReader();
         reader.onload = (e) => {
             currentSecondUploadedImageBase64 = e.target.result;
-            imagePreviewSecond.src = currentSecondUploadedImageBase64;
-            previewContainerSecond.style.display = "flex";
-            uploadPromptSecond.style.display = "none";
+            if (imagePreviewSecond) imagePreviewSecond.src = currentSecondUploadedImageBase64;
+            if (previewContainerSecond) previewContainerSecond.style.display = "flex";
+            if (uploadPromptSecond) uploadPromptSecond.style.display = "none";
             if (btnPickSecond) btnPickSecond.style.display = "none";
         };
         reader.readAsDataURL(file);
     }
 }
 
-// ==========================================
-// 5. ESCANEO Y CLASIFICACIÓN CON INTELIGENCIA ARTIFICIAL
-// ==========================================
-let scanTimeline = null;
-
+// Detección asistida por IA
 function ejecutarAnalisisIA(filename) {
+    const categoryInput = document.getElementById("prodCategory");
+    const titleInput = document.getElementById("prodTitle");
     const scanOverlay = document.getElementById("scanOverlay");
-    const scanLine = document.getElementById("scanLine");
-    const imgEl = document.getElementById("imagePreview");
 
-    // Iniciar animación de escaneo láser (GSAP)
-    scanOverlay.style.display = "block";
-    if (scanTimeline) scanTimeline.kill();
-    scanTimeline = gsap.timeline({ repeat: -1 });
-    scanTimeline.fromTo(scanLine, { top: "0%" }, { top: "100%", duration: 1.2, ease: "power1.inOut" })
-                .to(scanLine, { top: "0%", duration: 1.2, ease: "power1.inOut" });
+    if (scanOverlay) scanOverlay.style.display = "block";
+    showAIStatus("🔍 Analizando imagen con IA...", "info");
 
-    showAIStatus("Escaneando e identificando el producto con IA...", "loading");
+    analizarHeuristicaFilename(filename);
 
-    // 1. Aplicamos heurística basada en el nombre del archivo primero (muy rápida y precisa para nombres conocidos)
-    const heuristica = analizarHeuristicaFilename(filename);
-
-    // 2. Ejecutar clasificación TensorFlow.js en paralelo (con delay sutil para mejorar la sensación de escaneo/UX)
-    setTimeout(async () => {
-        let clasificacionIA = null;
-        if (tfModel && imgEl) {
-            try {
-                const predictions = await tfModel.classify(imgEl);
-                console.log("Predicciones de TensorFlow.js:", predictions);
-                clasificacionIA = procesarPrediccionesIA(predictions);
-            } catch (err) {
-                console.error("Error clasificando con TensorFlow:", err);
-            }
-        }
-
-        // Combinamos la heurística y la clasificación por modelo
-        const resultadoFinal = clasificacionIA || heuristica || { category: "", title: "", confidence: 0 };
-
-        // Detener animación de escaneo
-        gsap.to(scanOverlay, {
-            opacity: 0,
-            duration: 0.3,
-            onComplete: () => {
-                scanOverlay.style.display = "none";
-                scanOverlay.style.opacity = 1;
-                if (scanTimeline) scanTimeline.kill();
-            }
-        });
-
-        // Rellenar formulario automáticamente si se detectó algo
-        if (resultadoFinal.category) {
-            document.getElementById("prodCategory").value = resultadoFinal.category;
-            document.getElementById("prodTitle").value = resultadoFinal.title;
-            
-            showAIStatus(`¡Producto detectado! Es un(a) "${resultadoFinal.title}" en la categoría "${resultadoFinal.category.toUpperCase()}"`, "success");
-            
-            // Animación de feedback para indicar que se llenaron los campos
-            gsap.fromTo("#prodTitle, #prodCategory", 
-                { backgroundColor: "rgba(37, 211, 102, 0.1)" }, 
-                { backgroundColor: "var(--bg-main)", duration: 1.2 }
-            );
-        } else {
-            showAIStatus("No se pudo identificar automáticamente. Por favor ingresa los datos a mano.", "info");
-        }
-    }, 1800);
+    const imgElem = document.getElementById("imagePreview");
+    if (tfModel && imgElem && imgElem.complete && imgElem.naturalWidth > 0) {
+        tfModel.classify(imgElem)
+            .then(predictions => {
+                if (scanOverlay) scanOverlay.style.display = "none";
+                procesarPrediccionesIA(predictions);
+            })
+            .catch(err => {
+                if (scanOverlay) scanOverlay.style.display = "none";
+                showAIStatus("✓ Detección asistida completada", "success");
+            });
+    } else {
+        setTimeout(() => {
+            if (scanOverlay) scanOverlay.style.display = "none";
+            showAIStatus("✓ Detección asistida completada", "success");
+        }, 600);
+    }
 }
 
-// Analizador heurístico rápido de nombres de archivo
 function analizarHeuristicaFilename(filename) {
-    const fn = filename.toLowerCase();
-    
-    if (fn.includes("labial") || fn.includes("brillo") || fn.includes("gloss") || fn.includes("lip") || fn.includes("tinta") || fn.includes("vinyl") || fn.includes("rouge")) {
-        return { category: "labios", title: "Lip Gloss / Labial Premium" };
+    const fname = filename.toLowerCase();
+    const categoryInput = document.getElementById("prodCategory");
+    const titleInput = document.getElementById("prodTitle");
+
+    if (!categoryInput) return;
+
+    if (fname.includes("lip") || fname.includes("labial") || fname.includes("gloss") || fname.includes("tinta") || fname.includes("vinyl")) {
+        categoryInput.value = "labios";
+        if (titleInput && !titleInput.value) titleInput.value = "Lip Gloss Dolce Bella";
+    } else if (fname.includes("base") || fname.includes("blush") || fname.includes("polvo") || fname.includes("corrector") || fname.includes("rubor")) {
+        categoryInput.value = "rostro";
+        if (titleInput && !titleInput.value && fname.includes("blush")) titleInput.value = "Blush Dolce Bella";
+        if (titleInput && !titleInput.value && fname.includes("base")) titleInput.value = "Base Matte Dolce Bella";
+    } else if (fname.includes("mascara") || fname.includes("pestaña") || fname.includes("ceja") || fname.includes("lapiz") || fname.includes("delineador")) {
+        categoryInput.value = "ojos";
+        if (titleInput && !titleInput.value && fname.includes("mascara")) titleInput.value = "Máscara de Pestañas Dolce Bella";
+    } else if (fname.includes("pinza") || fname.includes("guante") || fname.includes("gorro") || fname.includes("esponja") || fname.includes("brocha")) {
+        categoryInput.value = "accesorios";
     }
-    if (fn.includes("base") || fn.includes("polvo") || fn.includes("compacto") || fn.includes("corrector") || fn.includes("suede") || fn.includes("matte")) {
-        return { category: "rostro", title: "Base de Maquillaje Matte" };
-    }
-    if (fn.includes("blush") || fn.includes("rubor") || fn.includes("velvet") || fn.includes("iluminador")) {
-        return { category: "rostro", title: "Blush Compacto" };
-    }
-    if (fn.includes("ceja") || fn.includes("pestaña") || fn.includes("mascara") || fn.includes("delineador") || fn.includes("lapiz") || fn.includes("ojo") || fn.includes("gel")) {
-        // Diferenciar si es delineador o máscara
-        if (fn.includes("lapiz") || fn.includes("pencil")) {
-            return { category: "ojos", title: "Lápiz para Cejas / Ojos" };
-        }
-        if (fn.includes("gel")) {
-            return { category: "ojos", title: "Gel de Cejas" };
-        }
-        return { category: "ojos", title: "Máscara de Pestañas" };
-    }
-    if (fn.includes("pinza") || fn.includes("guante") || fn.includes("gorro") || fn.includes("borla") || fn.includes("esponja") || fn.includes("brocha") || fn.includes("accesorio")) {
-        if (fn.includes("guante") || fn.includes("glove")) {
-            return { category: "accesorios", title: "Guantes Exfoliantes" };
-        }
-        if (fn.includes("pinza")) {
-            return { category: "accesorios", title: "Pinza de Cabello" };
-        }
-        if (fn.includes("brocha") || fn.includes("brush")) {
-            return { category: "accesorios", title: "Kit de Brochas Profesionales" };
-        }
-        if (fn.includes("esponja") || fn.includes("sponge")) {
-            return { category: "accesorios", title: "Esponja de Maquillaje" };
-        }
-        return { category: "accesorios", title: "Accesorio de Belleza" };
-    }
-    return null;
+
+    categoryInput.dispatchEvent(new Event("change"));
 }
 
-// Procesamiento de las etiquetas de MobileNet
 function procesarPrediccionesIA(predictions) {
-    // Tomamos la primera predicción con mayor confianza
-    const top = predictions[0];
-    if (!top || top.probability < 0.1) return null;
+    if (!predictions || predictions.length === 0) return;
+    const categoryInput = document.getElementById("prodCategory");
+    if (!categoryInput) return;
 
-    const className = top.className.toLowerCase();
-    
-    // Lipstick
-    if (className.includes("lipstick") || className.includes("lip rouge") || className.includes("makeup") && className.includes("lip")) {
-        return { category: "labios", title: "Lip Gloss / Labial Premium" };
-    }
-    // Hairpin / Hair slide / Accessories
-    if (className.includes("hair slide") || className.includes("hairpin") || className.includes("pin") || className.includes("barrette")) {
-        return { category: "accesorios", title: "Pinza Premium" };
-    }
-    // Glove / Mittens
-    if (className.includes("glove") || className.includes("mitten") || className.includes("hand wear")) {
-        return { category: "accesorios", title: "Guantes Exfoliantes" };
-    }
-    // Brush
-    if (className.includes("brush") || className.includes("paint brush") || className.includes("toothbrush")) {
-        return { category: "accesorios", title: "Kit de Brochas Profesionales" };
-    }
-    // Sponge
-    if (className.includes("sponge")) {
-        return { category: "accesorios", title: "Esponja de Maquillaje" };
-    }
-    // Lotion / Face powder / Perfume / Cosmetic container
-    if (className.includes("powder") || className.includes("lotion") || className.includes("sunscreen") || className.includes("cream") || className.includes("perfume") || className.includes("cosmetic")) {
-        if (className.includes("powder")) {
-            return { category: "rostro", title: "Polvo Compacto Premium" };
+    const topClass = predictions[0].className.toLowerCase();
+
+    if (topClass.includes("lipstick") || topClass.includes("lotion") || topClass.includes("perfume") || topClass.includes("cosmetic")) {
+        if (!categoryInput.value || categoryInput.value === "labios") {
+            showAIStatus("✨ IA detectó Cosmético / Maquillaje", "success");
         }
-        return { category: "rostro", title: "Base de Maquillaje Matte" };
     }
-    // Mascara / Eyeliner (Sometimes predicted as office supplies, writing utensils or makeup)
-    if (className.includes("mascara") || className.includes("pencil") || className.includes("fountain pen") || className.includes("ballpoint")) {
-        return { category: "ojos", title: "Lápiz / Máscara de Ojos" };
-    }
-
-    return null;
 }
 
 // ==========================================
-// 6. CARGA Y GESTIÓN DEL CATÁLOGO
+// 5. CARGA Y GESTIÓN DEL CATÁLOGO
 // ==========================================
 async function loadCatalog() {
     const listContainer = document.getElementById("catalogList");
@@ -497,7 +431,7 @@ async function loadCatalog() {
 
     listContainer.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);">Cargando catálogo...</div>`;
 
-    // Catálogo base hardcodeado (fallback para modo file:// sin servidor)
+    // Catálogo base fallback
     const dbFallback = [
         { id: 1,  title: "Pinza para planchado",                  price: 0.80,  category: "accesorios", img: "assets/images/pinza-planchado.jpeg",   stock: 13, tones: "" },
         { id: 2,  title: "Guantes exfoliante",                    price: 2.50,  category: "accesorios", img: "assets/images/guantes.jpeg",            stock: 1,  tones: "" },
@@ -540,10 +474,35 @@ async function loadCatalog() {
         dbOrig = dbFallback;
     }
 
-    // Combinar con localStorage (modo estático) o usar el JSON del servidor
+    if (!Array.isArray(dbOrig) || dbOrig.length === 0) {
+        dbOrig = dbFallback;
+    }
+
+    // Fusionar de forma limpia sin duplicados en modo local o servidor
     if (!serverSyncActive) {
-        catalogoCompleto = dbOrig.filter(p => !localDeletedIds.includes(p.id));
-        catalogoCompleto = [...catalogoCompleto, ...localAddedProducts];
+        const deletedSet = new Set(localDeletedIds.map(Number));
+        let list = dbOrig.filter(p => !deletedSet.has(Number(p.id)));
+
+        // Aplicar actualizaciones locales sobre los productos base
+        list = list.map(p => {
+            const key = String(p.id);
+            return localUpdatedProducts[key] ? { ...p, ...localUpdatedProducts[key] } : p;
+        });
+
+        // Agregar los productos nuevos creados en modo local que no existan aún en el listado
+        for (const localP of localAddedProducts) {
+            const numId = Number(localP.id);
+            if (deletedSet.has(numId)) continue;
+
+            const existingIndex = list.findIndex(p => Number(p.id) === numId);
+            if (existingIndex !== -1) {
+                list[existingIndex] = { ...list[existingIndex], ...localP };
+            } else {
+                list.push(localP);
+            }
+        }
+
+        catalogoCompleto = list;
     } else {
         catalogoCompleto = dbOrig;
     }
@@ -551,11 +510,7 @@ async function loadCatalog() {
     renderCatalogList();
 }
 
-
-// Estado del creador de tonos
-let currentToneObjects = [];
-
-// Diccionario de colores automáticos para nombres de tonos de maquillaje
+// Diccionario de colores automáticos para nombres de tonos
 const DIC_COLORES_TONOS = {
     "carmel": "#C68642", "caramel": "#C68642", "caramelo": "#C68642",
     "vainilla": "#F5E5B8", "vanilla": "#F5E5B8",
@@ -576,23 +531,21 @@ const DIC_COLORES_TONOS = {
 };
 
 function autoDetectToneColor(name) {
-    if (!name) return "#EC1C80";
-    const lower = name.toLowerCase().trim();
-    
-    // Buscar coincidencia directa por palabra clave
-    for (const [key, hex] of Object.entries(DIC_COLORES_TONOS)) {
-        if (lower.includes(key)) {
-            return hex;
+    if (!name) return "#E22963";
+    const cleanName = name.toLowerCase().trim();
+
+    for (const [key, color] of Object.entries(DIC_COLORES_TONOS)) {
+        if (cleanName.includes(key)) {
+            return color;
         }
     }
 
-    // Fallback determinístico suave
     let hash = 0;
-    for (let i = 0; i < lower.length; i++) {
-        hash = lower.charCodeAt(i) + ((hash << 5) - hash);
+    for (let i = 0; i < cleanName.length; i++) {
+        hash = cleanName.charCodeAt(i) + ((hash << 5) - hash);
     }
-    const hue = Math.abs(hash) % 360;
-    return hslToHex(hue, 65, 62);
+    const h = Math.abs(hash) % 360;
+    return hslToHex(h, 60, 65);
 }
 
 function hslToHex(h, s, l) {
@@ -606,76 +559,66 @@ function hslToHex(h, s, l) {
     return `#${f(0)}${f(8)}${f(4)}`;
 }
 
-let userManuallySelectedColor = false;
-
+// Creador de Chips de Tonos
 function setupToneBuilder() {
-    const btnAdd = document.getElementById("btnAddToneChip");
     const nameInput = document.getElementById("newToneName");
     const colorInput = document.getElementById("newToneColor");
-    const chipsContainer = document.getElementById("toneChipsList");
+    const addBtn = document.getElementById("btnAddToneChip");
 
-    if (!btnAdd || !nameInput || !colorInput || !chipsContainer) return;
+    if (!nameInput || !colorInput || !addBtn) return;
 
-    // Si el usuario toca o cambia la paleta de colores manualmente, recordar su elección
-    colorInput.addEventListener("input", () => {
-        userManuallySelectedColor = true;
-    });
-
-    colorInput.addEventListener("change", () => {
-        userManuallySelectedColor = true;
-    });
-
-    // Al escribir el nombre del tono, auto-detectar solo si el usuario no eligió un color manualmente
     nameInput.addEventListener("input", () => {
         const val = nameInput.value.trim();
-        if (val.length > 0 && !userManuallySelectedColor) {
-            const detectedColor = autoDetectToneColor(val);
-            colorInput.value = detectedColor;
+        if (val) {
+            colorInput.value = autoDetectToneColor(val);
         }
     });
 
-    // Permitir agregar el tono al presionar Enter en la caja de texto
-    nameInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            btnAdd.click();
-        }
-    });
-
-    btnAdd.addEventListener("click", () => {
+    addBtn.addEventListener("click", () => {
         const name = nameInput.value.trim();
-        const color = colorInput.value || autoDetectToneColor(name);
-        if (!name) return;
+        const color = colorInput.value;
 
-        currentToneObjects.push({ name, color });
+        if (!name) {
+            alert("Por favor escribe el nombre del tono.");
+            return;
+        }
+
+        const existe = currentToneObjects.some(t => t.name.toLowerCase() === name.toLowerCase());
+        if (existe) {
+            alert(`El tono "${name}" ya está agregado.`);
+            return;
+        }
+
+        currentToneObjects.push({ name: name, color: color });
         nameInput.value = "";
         colorInput.value = "#EC1C80";
-        userManuallySelectedColor = false;
         renderToneChips();
     });
 }
 
 function renderToneChips() {
-    const chipsContainer = document.getElementById("toneChipsList");
+    const listContainer = document.getElementById("toneChipsList");
     const hiddenTones = document.getElementById("prodTones");
-    if (!chipsContainer) return;
 
-    chipsContainer.innerHTML = "";
+    if (!listContainer) return;
 
-    currentToneObjects.forEach((t, index) => {
+    listContainer.innerHTML = "";
+
+    currentToneObjects.forEach((tone, index) => {
         const chip = document.createElement("div");
-        chip.className = "tone-chip-item";
+        chip.className = "tone-chip";
         chip.innerHTML = `
-            <span class="tone-chip-color" style="background: ${t.color}"></span>
-            <span>${t.name}</span>
-            <button type="button" class="tone-chip-remove" data-index="${index}">&times;</button>
+            <span class="tone-color-dot" style="background-color: ${tone.color};"></span>
+            <span class="tone-name-text">${tone.name}</span>
+            <button type="button" class="btn-remove-chip" data-index="${index}" title="Eliminar tono">&times;</button>
         `;
-        chipsContainer.appendChild(chip);
+        listContainer.appendChild(chip);
     });
 
-    chipsContainer.querySelectorAll(".tone-chip-remove").forEach(btn => {
+    listContainer.querySelectorAll(".btn-remove-chip").forEach(btn => {
         btn.addEventListener("click", (e) => {
-            const idx = parseInt(e.target.dataset.index);
+            e.stopPropagation();
+            const idx = parseInt(btn.dataset.index);
             currentToneObjects.splice(idx, 1);
             renderToneChips();
         });
@@ -686,12 +629,14 @@ function renderToneChips() {
     }
 }
 
+// ==========================================
+// 6. RENDERIZADO DEL CATÁLOGO & ESTADÍSTICAS
+// ==========================================
 function renderCatalogList(filtrados = null) {
     const listContainer = document.getElementById("catalogList");
-    const searchCatalogInput = document.getElementById("searchCatalogInput");
     if (!listContainer) return;
 
-    // Actualizar Widget de Estadísticas de Inventario
+    // Actualizar Estadísticas
     const statTotalElem = document.getElementById("statTotalCount");
     const statLowElem = document.getElementById("statLowCount");
     const statOutElem = document.getElementById("statOutCount");
@@ -713,14 +658,13 @@ function renderCatalogList(filtrados = null) {
         return;
     }
 
-    // Ordenar por ID descendente para ver los últimos agregados primero
-    const ordenados = [...items].sort((a, b) => b.id - a.id);
+    // Ordenar por ID descendente para ver los más nuevos primero
+    const ordenados = [...items].sort((a, b) => Number(b.id) - Number(a.id));
 
     ordenados.forEach(prod => {
         const itemDiv = document.createElement("div");
         itemDiv.className = "catalog-item";
 
-        // Determinar badge de inventario
         const stockVal = typeof prod.stock === "number" ? prod.stock : 1;
         let stockBadgeHtml = "";
         if (stockVal <= 0) {
@@ -742,14 +686,14 @@ function renderCatalogList(filtrados = null) {
                         ${prod.tones ? `<span>Tonos: <strong>${prod.tones}</strong></span>` : ''}
                     </div>
                 </div>
-                <div class="item-price">$${prod.price.toFixed(2)}</div>
+                <div class="item-price">$${Number(prod.price).toFixed(2)}</div>
             </div>
             <div class="item-actions">
-                <button class="btn-edit" data-id="${prod.id}" title="Editar producto">
+                <button type="button" class="btn-edit" data-id="${prod.id}" title="Editar producto">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                     Editar
                 </button>
-                <button class="btn-delete" data-id="${prod.id}" title="Eliminar producto">
+                <button type="button" class="btn-delete" data-id="${prod.id}" title="Eliminar producto">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
                     Borrar
                 </button>
@@ -758,27 +702,35 @@ function renderCatalogList(filtrados = null) {
 
         listContainer.appendChild(itemDiv);
     });
+}
 
-    // Eventos de editar
-    listContainer.querySelectorAll(".btn-edit").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const id = parseInt(btn.dataset.id);
+// Delegación de Eventos en la Lista del Catálogo (Registrado 1 sola vez)
+function setupCatalogListDelegation() {
+    const listContainer = document.getElementById("catalogList");
+    const searchCatalogInput = document.getElementById("searchCatalogInput");
+
+    if (!listContainer || listContainer.dataset.delegated) return;
+    listContainer.dataset.delegated = "true";
+
+    listContainer.addEventListener("click", (e) => {
+        const btnEdit = e.target.closest(".btn-edit");
+        if (btnEdit) {
+            const id = Number(btnEdit.dataset.id);
             cargarProductoParaEditar(id);
-        });
-    });
+            return;
+        }
 
-    // Eventos de eliminar
-    listContainer.querySelectorAll(".btn-delete").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const id = parseInt(btn.dataset.id);
-            const nombreProd = btn.closest(".catalog-item")?.querySelector(".item-title")?.textContent || "este producto";
-            if (confirm(`¿Eliminar "${nombreProd}" del catálogo?\n\nEsta acción se puede deshacer volviendo a agregar el producto.`)) {
+        const btnDelete = e.target.closest(".btn-delete");
+        if (btnDelete) {
+            const id = Number(btnDelete.dataset.id);
+            const nombreProd = btnDelete.closest(".catalog-item")?.querySelector(".item-title")?.textContent || "este producto";
+            if (confirm(`¿Eliminar "${nombreProd}" del catálogo?\n\nEsta acción eliminará el producto definitivamente.`)) {
                 eliminarProducto(id);
             }
-        });
+            return;
+        }
     });
 
-    // Buscador
     if (searchCatalogInput && !searchCatalogInput.dataset.listened) {
         searchCatalogInput.dataset.listened = "true";
         searchCatalogInput.addEventListener("input", (e) => {
@@ -787,8 +739,8 @@ function renderCatalogList(filtrados = null) {
                 renderCatalogList();
             } else {
                 const filtrados = catalogoCompleto.filter(p => 
-                    p.title.toLowerCase().includes(q) || 
-                    p.category.toLowerCase().includes(q)
+                    (p.title && p.title.toLowerCase().includes(q)) || 
+                    (p.category && p.category.toLowerCase().includes(q))
                 );
                 renderCatalogList(filtrados);
             }
@@ -796,25 +748,30 @@ function renderCatalogList(filtrados = null) {
     }
 }
 
-// Cargar producto existente en el formulario para editar
+// ==========================================
+// 7. MODO EDICIÓN Y CANCELACIÓN
+// ==========================================
 function cargarProductoParaEditar(id) {
-    const prod = catalogoCompleto.find(p => p.id === id);
+    const numId = Number(id);
+    const prod = catalogoCompleto.find(p => Number(p.id) === numId);
     if (!prod) return;
+
+    // ESTABLECER ESTADO DE EDICIÓN EXPLÍCITO
+    editingProductId = prod.id;
 
     document.getElementById("editProdId").value = prod.id;
     document.getElementById("prodTitle").value = prod.title || "";
-    document.getElementById("prodPrice").value = prod.price || 0;
+    document.getElementById("prodPrice").value = prod.price !== undefined ? prod.price : 0;
     document.getElementById("prodCategory").value = prod.category || "labios";
     document.getElementById("prodStock").value = typeof prod.stock === "number" ? prod.stock : 1;
     document.getElementById("prodBadge").value = prod.badge || "";
     
-    // Cargar fotos adicionales de forma segura sin lanzar errores
     const extraInput = document.getElementById("prodExtraImages");
     if (extraInput) {
         extraInput.value = (prod.images && Array.isArray(prod.images)) ? prod.images.join(", ") : "";
     }
 
-    // Cargar tonos y dibujar chips visuales de los tonos actuales
+    // Cargar tonos existentes
     if (prod.toneObjects && Array.isArray(prod.toneObjects) && prod.toneObjects.length > 0) {
         currentToneObjects = prod.toneObjects.map(t => ({
             name: typeof t === "string" ? t : t.name,
@@ -830,100 +787,126 @@ function cargarProductoParaEditar(id) {
     }
     renderToneChips();
 
-    // Cargar vista previa de Foto Principal
+    // Guardar referencias a las imágenes originales
+    editingOriginalImg = prod.img || "";
+    editingOriginalImages = Array.isArray(prod.images) ? [...prod.images] : [];
+    currentUploadedImageBase64 = "";
+    currentSecondUploadedImageBase64 = "";
+
+    // Previsualización Foto 1
     const imagePreview = document.getElementById("imagePreview");
     const previewContainer = document.getElementById("previewContainer");
     const uploadPrompt = document.getElementById("uploadPrompt");
     const btnPickMain = document.getElementById("btnPickMainImage");
 
     if (prod.img) {
-        currentUploadedImageBase64 = prod.img;
         imagePreview.src = prod.img;
         previewContainer.style.display = "flex";
         uploadPrompt.style.display = "none";
         if (btnPickMain) btnPickMain.style.display = "none";
+    } else {
+        previewContainer.style.display = "none";
+        uploadPrompt.style.display = "block";
+        if (btnPickMain) btnPickMain.style.display = "inline-block";
     }
 
-    // Cargar vista previa de Segunda Foto
+    // Previsualización Foto 2
     const imagePreviewSecond = document.getElementById("imagePreviewSecond");
     const previewContainerSecond = document.getElementById("previewContainerSecond");
     const uploadPromptSecond = document.getElementById("uploadPromptSecond");
     const btnPickSecond = document.getElementById("btnPickSecondImage");
 
     if (prod.images && prod.images.length > 0 && prod.images[0]) {
-        currentSecondUploadedImageBase64 = prod.images[0];
         if (imagePreviewSecond) imagePreviewSecond.src = prod.images[0];
         if (previewContainerSecond) previewContainerSecond.style.display = "flex";
         if (uploadPromptSecond) uploadPromptSecond.style.display = "none";
         if (btnPickSecond) btnPickSecond.style.display = "none";
     } else {
-        currentSecondUploadedImageBase64 = "";
         if (previewContainerSecond) previewContainerSecond.style.display = "none";
         if (uploadPromptSecond) uploadPromptSecond.style.display = "block";
         if (btnPickSecond) btnPickSecond.style.display = "inline-block";
     }
 
     // Cambiar UI a modo edición
-    document.getElementById("stepBadgeText").textContent = `✏️ Modificando Producto #${prod.id}`;
-    document.getElementById("btnSubmitForm").textContent = "Actualizar Producto";
-    document.getElementById("btnCancelEdit").style.display = "inline-flex";
+    const badgeText = document.getElementById("stepBadgeText");
+    const submitBtn = document.getElementById("btnSubmitForm");
+    const cancelBtn = document.getElementById("btnCancelEdit");
 
-    // Scroll suave al formulario
-    document.querySelector(".studio-panel").scrollIntoView({ behavior: "smooth" });
+    if (badgeText) badgeText.textContent = `✏️ Modificando Producto #${prod.id}`;
+    if (submitBtn) submitBtn.textContent = "Actualizar Producto";
+    if (cancelBtn) cancelBtn.style.display = "inline-flex";
+
+    // Disparar evento input para actualizar la vista previa en vivo (mirror)
+    const titleInput = document.getElementById("prodTitle");
+    if (titleInput) titleInput.dispatchEvent(new Event("input"));
+
+    document.querySelector(".studio-panel")?.scrollIntoView({ behavior: "smooth" });
 }
 
 function cancelarEdicion() {
-    document.getElementById("productForm").reset();
-    document.getElementById("editProdId").value = "";
-    document.getElementById("stepBadgeText").textContent = "02 · Detalles del Producto";
-    document.getElementById("btnSubmitForm").textContent = "Guardar Producto";
-    document.getElementById("btnCancelEdit").style.display = "none";
+    const form = document.getElementById("productForm");
+    if (form) form.reset();
+
+    // RESTABLECER ESTADO A MODO CREACIÓN
+    editingProductId = null;
+    editingOriginalImg = "";
+    editingOriginalImages = [];
     currentUploadedImageBase64 = "";
     currentSecondUploadedImageBase64 = "";
     currentToneObjects = [];
+
+    document.getElementById("editProdId").value = "";
+    const badgeText = document.getElementById("stepBadgeText");
+    const submitBtn = document.getElementById("btnSubmitForm");
+    const cancelBtn = document.getElementById("btnCancelEdit");
+
+    if (badgeText) badgeText.textContent = "02 · Detalles del Producto";
+    if (submitBtn) submitBtn.textContent = "Guardar Producto";
+    if (cancelBtn) cancelBtn.style.display = "none";
+
     renderToneChips();
-    
+
     // Reset foto 1
     const previewContainer = document.getElementById("previewContainer");
     const uploadPrompt = document.getElementById("uploadPrompt");
-    if (previewContainer && uploadPrompt) {
-        previewContainer.style.display = "none";
-        uploadPrompt.style.display = "block";
-    }
+    const btnPickMain = document.getElementById("btnPickMainImage");
+    if (previewContainer) previewContainer.style.display = "none";
+    if (uploadPrompt) uploadPrompt.style.display = "block";
+    if (btnPickMain) btnPickMain.style.display = "inline-block";
 
     // Reset foto 2
     const previewContainerSecond = document.getElementById("previewContainerSecond");
     const uploadPromptSecond = document.getElementById("uploadPromptSecond");
-    if (previewContainerSecond && uploadPromptSecond) {
-        previewContainerSecond.style.display = "none";
-        uploadPromptSecond.style.display = "block";
-    }
+    const btnPickSecond = document.getElementById("btnPickSecondImage");
+    if (previewContainerSecond) previewContainerSecond.style.display = "none";
+    if (uploadPromptSecond) uploadPromptSecond.style.display = "block";
+    if (btnPickSecond) btnPickSecond.style.display = "inline-block";
+
+    // Actualizar espejo en vivo
+    const titleInput = document.getElementById("prodTitle");
+    if (titleInput) titleInput.dispatchEvent(new Event("input"));
 }
 
 // ==========================================
-// 7. AÑADIR / ELIMINAR / EDITAR PRODUCTOS
+// 8. PROCESAMIENTO DEL FORMULARIO (CRUD)
 // ==========================================
 function setupProductForm() {
-    setupToneBuilder();
-
     const form = document.getElementById("productForm");
     const btnCancel = document.getElementById("btnCancelEdit");
 
-    if (btnCancel) {
+    if (btnCancel && !btnCancel.dataset.listened) {
+        btnCancel.dataset.listened = "true";
         btnCancel.addEventListener("click", cancelarEdicion);
     }
 
-    if (!form) return;
+    if (!form || form.dataset.listened) return;
+    form.dataset.listened = "true";
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        const editIdVal = document.getElementById("editProdId").value;
-        const isEditing = Boolean(editIdVal);
-        const editId = isEditing ? parseInt(editIdVal) : null;
-
         const title = document.getElementById("prodTitle").value.trim();
-        const price = parseFloat(document.getElementById("prodPrice").value);
+        const price = parseFloat(document.getElementById("prodPrice").value) || 0;
         const category = document.getElementById("prodCategory").value;
         const stockRaw = document.getElementById("prodStock").value;
         const stock = (stockRaw !== "" && !isNaN(parseInt(stockRaw))) ? parseInt(stockRaw) : 0;
@@ -933,128 +916,234 @@ function setupProductForm() {
 
         const tonesStr = currentToneObjects.map(t => t.name).join(", ");
 
-        // Comprimir Foto 1 a Alta Nitidez (HD 1200px)
+        // Determinar Foto 1 final
         let imgFinal = "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400";
         if (currentUploadedImageBase64) {
             try {
                 imgFinal = await comprimirImagen(currentUploadedImageBase64, 1200);
-            } catch(e) {
+            } catch(err) {
                 imgFinal = currentUploadedImageBase64;
             }
+        } else if (editingProductId !== null) {
+            imgFinal = editingOriginalImg || imgFinal;
         }
 
-        // Comprimir Foto 2 a Alta Nitidez (HD 1200px)
+        // Determinar Foto 2 final
         if (currentSecondUploadedImageBase64) {
             let imgSecondFinal = currentSecondUploadedImageBase64;
             try {
                 imgSecondFinal = await comprimirImagen(currentSecondUploadedImageBase64, 1200);
-            } catch(e) {
+            } catch(err) {
                 imgSecondFinal = currentSecondUploadedImageBase64;
             }
-            // Asegurar que la 2da foto esté en primer lugar del arreglo de imágenes
             extraImages = [imgSecondFinal, ...extraImages.filter(img => img !== imgSecondFinal)];
+        } else if (editingProductId !== null && editingOriginalImages.length > 0) {
+            extraImages = Array.from(new Set([...editingOriginalImages, ...extraImages]));
         }
 
-        if (isEditing) {
-            // EDITAR PRODUCTO EXISTENTE
-            const prodIndex = catalogoCompleto.findIndex(p => p.id === editId);
-            if (prodIndex !== -1) {
-                const prodExistente = catalogoCompleto[prodIndex];
-                const prodActualizado = {
-                    ...prodExistente,
-                    title: title,
-                    price: price,
-                    category: category,
-                    img: currentUploadedImageBase64 ? imgFinal : prodExistente.img,
-                    images: extraImages.length > 0 ? extraImages : prodExistente.images,
-                    stock: stock,
-                    badge: badge,
-                    tones: tonesStr,
-                    toneObjects: currentToneObjects
-                };
+        const productData = {
+            title: title,
+            price: price,
+            category: category,
+            img: imgFinal,
+            images: extraImages,
+            stock: stock,
+            badge: badge,
+            tones: tonesStr,
+            toneObjects: [...currentToneObjects]
+        };
 
-                if (serverSyncActive) {
-                    catalogoCompleto[prodIndex] = prodActualizado;
-                    const guardado = await guardarEnServidor(catalogoCompleto);
-                    if (guardado) {
-                        mostrarNotificacion(`Producto "${title}" actualizado en el servidor. ✓`);
-                        cancelarEdicion();
-                        loadCatalog();
-                    } else {
-                        alert("No se pudo guardar la actualización en el servidor.");
-                    }
-                } else {
-                    // Modo estático (localStorage)
-                    catalogoCompleto[prodIndex] = prodActualizado;
-                    // Si estaba en añadidos locales, actualizarlo
-                    const localIdx = localAddedProducts.findIndex(p => p.id === editId);
-                    if (localIdx !== -1) {
-                        localAddedProducts[localIdx] = prodActualizado;
-                    } else {
-                        localAddedProducts.push(prodActualizado);
-                    }
-                    localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
-                    mostrarNotificacion(`Producto "${title}" actualizado localmente. ✓`);
-                    cancelarEdicion();
-                    loadCatalog();
-                }
-            }
+        // SEPARACIÓN ESTRICTA: EDITAR vs CREAR
+        if (editingProductId !== null) {
+            await actualizarProducto(editingProductId, productData);
         } else {
-            // CREAR NUEVO PRODUCTO
-            const baseMaxId = Math.max(
-                catalogoCompleto.reduce((max, p) => p.id > max ? p.id : max, 0),
-                1000
-            );
-            const newId = baseMaxId + 1;
-
-            const nuevoProducto = {
-                id: newId,
-                title: title,
-                price: price,
-                category: category,
-                img: imgFinal,
-                images: extraImages,
-                stock: stock,
-                badge: badge,
-                tones: tonesStr,
-                toneObjects: currentToneObjects
-            };
-
-            if (serverSyncActive) {
-                catalogoCompleto.push(nuevoProducto);
-                const guardado = await guardarEnServidor(catalogoCompleto);
-                if (guardado) {
-                    mostrarNotificacion("Producto creado permanentemente. ✓");
-                    cancelarEdicion();
-                    loadCatalog();
-                } else {
-                    catalogoCompleto.pop();
-                    alert("Hubo un error al guardar el producto en el servidor.");
-                }
-            } else {
-                // Modo estático (localStorage)
-                localAddedProducts.push(nuevoProducto);
-                try {
-                    localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
-                } catch(e) {
-                    nuevoProducto.img = "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400";
-                    localAddedProducts[localAddedProducts.length - 1] = nuevoProducto;
-                    localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
-                    mostrarNotificacion("⚠️ Imagen no guardada (almacenamiento lleno). Producto agregado sin foto.");
-                }
-
-                localDeletedIds = localDeletedIds.filter(id => id !== newId);
-                localStorage.setItem('KARA_ADMIN_DELETED', JSON.stringify(localDeletedIds));
-
-                mostrarNotificacion("Producto creado. ✓ — Ya aparece en la tienda y catálogo.");
-                cancelarEdicion();
-                loadCatalog();
-            }
+            await crearProducto(productData);
         }
     });
 }
 
-// Comprime una imagen base64 con alta nitidez (HD 1200px)
+// ACTUALIZAR PRODUCTO EXISTENTE
+async function actualizarProducto(id, data) {
+    const targetId = Number(id);
+    const index = catalogoCompleto.findIndex(p => Number(p.id) === targetId);
+
+    if (index === -1) {
+        alert("Error: No se encontró el producto a actualizar en la lista.");
+        return;
+    }
+
+    const prodActualizado = {
+        ...catalogoCompleto[index],
+        ...data,
+        id: targetId // PRESERVAR ID ORIGINAL
+    };
+
+    if (serverSyncActive) {
+        catalogoCompleto[index] = prodActualizado;
+
+        // Intentar actualizar vía PUT o POST en servidor
+        let guardado = false;
+        try {
+            const res = await fetch(`/api/productos/${targetId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(prodActualizado)
+            });
+            guardado = res.ok;
+        } catch(e) {
+            guardado = false;
+        }
+
+        if (!guardado) {
+            guardado = await guardarEnServidor(catalogoCompleto);
+        }
+
+        if (guardado) {
+            mostrarNotificacion(`Producto "${data.title}" actualizado con éxito. ✓`);
+            cancelarEdicion();
+            renderCatalogList();
+        } else {
+            alert("No se pudo guardar la actualización en el servidor.");
+        }
+    } else {
+        // MODO ESTÁTICO (localStorage)
+        catalogoCompleto[index] = prodActualizado;
+
+        // Si pertenece a productos agregados localmente, actualizarlo ahí
+        const localIdx = localAddedProducts.findIndex(p => Number(p.id) === targetId);
+        if (localIdx !== -1) {
+            localAddedProducts[localIdx] = prodActualizado;
+            localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
+        } else {
+            // Si es un producto base original, guardar su actualización aislada
+            localUpdatedProducts[String(targetId)] = prodActualizado;
+            localStorage.setItem('KARA_ADMIN_UPDATED', JSON.stringify(localUpdatedProducts));
+        }
+
+        mostrarNotificacion(`Producto "${data.title}" actualizado localmente. ✓`);
+        cancelarEdicion();
+        renderCatalogList();
+    }
+}
+
+// CREAR NUEVO PRODUCTO
+async function crearProducto(data) {
+    // Generar un ID único mayor al máximo existente
+    const allIds = [
+        ...catalogoCompleto.map(p => Number(p.id) || 0),
+        ...localAddedProducts.map(p => Number(p.id) || 0),
+        1000
+    ];
+    const newId = Math.max(...allIds) + 1;
+
+    const nuevoProducto = {
+        ...data,
+        id: newId
+    };
+
+    if (serverSyncActive) {
+        catalogoCompleto.unshift(nuevoProducto);
+        const guardado = await guardarEnServidor(catalogoCompleto);
+        if (guardado) {
+            mostrarNotificacion(`Producto "${data.title}" creado permanentemente. ✓`);
+            cancelarEdicion();
+            renderCatalogList();
+        } else {
+            catalogoCompleto.shift();
+            alert("Hubo un error al crear el producto en el servidor.");
+        }
+    } else {
+        // MODO ESTÁTICO (localStorage)
+        localAddedProducts.unshift(nuevoProducto);
+        try {
+            localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
+        } catch(e) {
+            // Si supera la cuota de localStorage, asignar imagen liviana
+            nuevoProducto.img = "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400";
+            localAddedProducts[0] = nuevoProducto;
+            localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
+            mostrarNotificacion("⚠️ Imagen optimizada por límite de memoria local.");
+        }
+
+        // Limpiar de eliminados si existía una id previa igual
+        localDeletedIds = localDeletedIds.filter(id => Number(id) !== newId);
+        localStorage.setItem('KARA_ADMIN_DELETED', JSON.stringify(localDeletedIds));
+
+        // Insertar en catálogo actual
+        catalogoCompleto.unshift(nuevoProducto);
+
+        mostrarNotificacion(`Producto "${data.title}" creado con éxito. ✓`);
+        cancelarEdicion();
+        renderCatalogList();
+    }
+}
+
+// ELIMINAR PRODUCTO
+async function eliminarProducto(id) {
+    const numId = Number(id);
+
+    if (serverSyncActive) {
+        let guardado = false;
+        try {
+            const res = await fetch(`/api/productos/${numId}`, { method: "DELETE" });
+            guardado = res.ok;
+        } catch(e) {
+            guardado = false;
+        }
+
+        if (!guardado) {
+            const nuevoCatalogo = catalogoCompleto.filter(p => Number(p.id) !== numId);
+            guardado = await guardarEnServidor(nuevoCatalogo);
+        }
+
+        if (guardado) {
+            catalogoCompleto = catalogoCompleto.filter(p => Number(p.id) !== numId);
+            mostrarNotificacion("Producto eliminado con éxito. ✓");
+            renderCatalogList();
+        } else {
+            alert("No se pudo eliminar el producto en el servidor.");
+        }
+    } else {
+        // MODO ESTÁTICO (localStorage)
+        const esLocal = localAddedProducts.some(p => Number(p.id) === numId);
+
+        if (esLocal) {
+            localAddedProducts = localAddedProducts.filter(p => Number(p.id) !== numId);
+            localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
+        }
+
+        if (localUpdatedProducts[String(numId)]) {
+            delete localUpdatedProducts[String(numId)];
+            localStorage.setItem('KARA_ADMIN_UPDATED', JSON.stringify(localUpdatedProducts));
+        }
+
+        if (!esLocal && !localDeletedIds.includes(numId)) {
+            localDeletedIds.push(numId);
+            localStorage.setItem('KARA_ADMIN_DELETED', JSON.stringify(localDeletedIds));
+        }
+
+        catalogoCompleto = catalogoCompleto.filter(p => Number(p.id) !== numId);
+        mostrarNotificacion("Producto eliminado localmente. ✓");
+        renderCatalogList();
+    }
+}
+
+// Guardar array completo en el servidor
+async function guardarEnServidor(lista) {
+    try {
+        const res = await fetch("/api/productos", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(lista)
+        });
+        return res.ok;
+    } catch (e) {
+        console.error("[KARA Admin] Error al guardar en servidor:", e);
+        return false;
+    }
+}
+
+// Compresión de imagen Base64
 function comprimirImagen(base64, maxSize = 1200) {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -1078,61 +1167,16 @@ function comprimirImagen(base64, maxSize = 1200) {
     });
 }
 
-async function eliminarProducto(id) {
-    if (serverSyncActive) {
-        const nuevoCatalogo = catalogoCompleto.filter(p => p.id !== id);
-        const guardado = await guardarEnServidor(nuevoCatalogo);
-        if (guardado) {
-            mostrarNotificacion("Producto eliminado permanentemente. ✓");
-            loadCatalog();
-        } else {
-            alert("No se pudo guardar la eliminación en el servidor.");
-        }
-    } else {
-        // Buscar si estaba en añadidos locales
-        const esLocal = localAddedProducts.some(p => p.id === id);
-        if (esLocal) {
-            localAddedProducts = localAddedProducts.filter(p => p.id !== id);
-            localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
-        } else {
-            // Si es de los originales, registrar su ID como borrado
-            if (!localDeletedIds.includes(id)) {
-                localDeletedIds.push(id);
-                localStorage.setItem('KARA_ADMIN_DELETED', JSON.stringify(localDeletedIds));
-            }
-        }
-        mostrarNotificacion("Producto eliminado localmente. ✓ (Exporta el JSON para sincronizar)");
-        loadCatalog();
-    }
-}
-
-// Guardar array en el servidor local
-async function guardarEnServidor(lista) {
-    try {
-        const res = await fetch("/api/productos", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(lista)
-        });
-        return res.ok;
-    } catch (e) {
-        console.error("Error en guardarEnServidor:", e);
-        return false;
-    }
-}
-
-// ==========================================
-// 8. EXPORTACIÓN Y UTILIDADES
-// ==========================================
+// Exportar respaldos JSON
 function exportarJsonCompleto() {
     const catalogoExportable = catalogoCompleto.map(p => ({
-        id: p.id,
-        title: p.title,
-        price: p.price,
-        category: p.category,
-        img: p.img,
+        id: Number(p.id),
+        title: p.title || "",
+        price: Number(p.price) || 0,
+        category: p.category || "labios",
+        img: p.img || "",
         images: p.images || [],
-        stock: p.stock !== undefined ? p.stock : 1,
+        stock: p.stock !== undefined ? Number(p.stock) : 1,
         tones: p.tones || "",
         toneObjects: p.toneObjects || [],
         badge: p.badge || ""
@@ -1146,15 +1190,16 @@ function exportarJsonCompleto() {
     downloadAnchor.click();
     downloadAnchor.remove();
 
-    mostrarNotificacion("Archivo productos.json respaldado. 🥥");
+    mostrarNotificacion("Archivo productos.json respaldado con éxito. 📦");
 }
 
+// Toast de notificación
 function mostrarNotificacion(msg) {
     const toast = document.getElementById("notificationToast");
     const txt = document.getElementById("notificationText");
     if (!toast) return;
 
-    txt.textContent = msg;
+    if (txt) txt.textContent = msg;
     toast.classList.add("show");
 
     setTimeout(() => {

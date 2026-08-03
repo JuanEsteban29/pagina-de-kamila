@@ -283,6 +283,51 @@ app.post('/api/productos', async (req, res) => {
     });
 });
 
+// 3.5. PUT /api/productos/:id -> Actualizar un producto específico
+app.put('/api/productos/:id', async (req, res) => {
+    const id = parseInt(req.params.id);
+    const prodActualizado = { ...req.body, id };
+
+    try {
+        // 1. Leer y actualizar archivo js/productos.json en disco
+        const jsonPath = path.join(__dirname, 'js', 'productos.json');
+        let lista = [];
+        if (fs.existsSync(jsonPath)) {
+            try {
+                lista = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+            } catch (e) {
+                lista = [];
+            }
+        }
+
+        const idx = lista.findIndex(p => parseInt(p.id) === id);
+        if (idx !== -1) {
+            lista[idx] = { ...lista[idx], ...prodActualizado };
+        } else {
+            lista.push(prodActualizado);
+        }
+        guardarEnDisco(lista);
+
+        // 2. Actualizar en MySQL si está disponible
+        let mysqlStatus = 'desconectado';
+        try {
+            const db = getPool();
+            if (db) {
+                await sincronizarListaConMySQL(db, [prodActualizado]);
+                mysqlStatus = 'sincronizado';
+            }
+        } catch (err) {
+            console.warn('[KARA Server] Advertencia al actualizar en MySQL:', err.message);
+            mysqlStatus = 'error: ' + err.message;
+        }
+
+        res.json({ success: true, product: prodActualizado, mysql: mysqlStatus });
+    } catch (err) {
+        console.error('[KARA Server] Error al actualizar producto:', err.message);
+        res.status(500).json({ error: 'Error al actualizar producto', details: err.message });
+    }
+});
+
 // 4. DELETE /api/productos/:id -> Eliminar un producto específico
 app.delete('/api/productos/:id', async (req, res) => {
     const id = parseInt(req.params.id);
