@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function initAdmin() {
+    autoDeduplicarLocalStorage();
     setupPassGate();
     setupDynamicGreeting();
     setupImageUpload();
@@ -40,6 +41,33 @@ async function initAdmin() {
     await setupSyncMode();
     loadAIModel();
     await loadCatalog();
+}
+
+// Limpia automáticamente duplicados legacy del localStorage generados antes de la refactorización
+function autoDeduplicarLocalStorage() {
+    try {
+        let localAdded = JSON.parse(localStorage.getItem('KARA_ADMIN_ADDED')) || [];
+        if (!Array.isArray(localAdded)) localAdded = [];
+
+        // 1. Eliminar ediciones viejas con ID <= 1000 que pertenecían a productos base
+        let limpios = localAdded.filter(p => p && p.id && Number(p.id) > 1000);
+
+        // 2. Eliminar duplicados entre sí por ID (manteniendo la versión más reciente)
+        const mapUnicos = new Map();
+        for (const p of limpios) {
+            mapUnicos.set(Number(p.id), p);
+        }
+        limpios = Array.from(mapUnicos.values());
+
+        // 3. Sobrescribir en localStorage si hubo elementos depurados
+        if (localAdded.length !== limpios.length) {
+            localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(limpios));
+            localAddedProducts = limpios;
+            console.info(`[KARA Admin] Limpieza ejecutada: ${localAdded.length - limpios.length} duplicados antiguos borrados del almacenamiento.`);
+        }
+    } catch (e) {
+        console.warn("[KARA Admin] Error en auto-deduplicación:", e);
+    }
 }
 
 // Saludo dinámico según hora local
@@ -502,9 +530,22 @@ async function loadCatalog() {
             }
         }
 
-        catalogoCompleto = list;
+        // Garantizar deduplicación estricta por ID
+        const catalogMap = new Map();
+        for (const item of list) {
+            if (item && item.id) {
+                catalogMap.set(Number(item.id), item);
+            }
+        }
+        catalogoCompleto = Array.from(catalogMap.values());
     } else {
-        catalogoCompleto = dbOrig;
+        const catalogMap = new Map();
+        for (const item of dbOrig) {
+            if (item && item.id) {
+                catalogMap.set(Number(item.id), item);
+            }
+        }
+        catalogoCompleto = Array.from(catalogMap.values());
     }
 
     renderCatalogList();

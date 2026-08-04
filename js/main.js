@@ -279,7 +279,16 @@ async function initApp() {
 function migrarProductosAdminLegacy() {
     try {
         const localAdded = JSON.parse(localStorage.getItem('KARA_ADMIN_ADDED')) || [];
-        const sinDuplicados = localAdded.filter(p => p.id > 1000);
+        if (!Array.isArray(localAdded)) return;
+
+        let sinDuplicados = localAdded.filter(p => p && p.id && Number(p.id) > 1000);
+
+        const mapUnicos = new Map();
+        for (const p of sinDuplicados) {
+            mapUnicos.set(Number(p.id), p);
+        }
+        sinDuplicados = Array.from(mapUnicos.values());
+
         if (sinDuplicados.length !== localAdded.length) {
             localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(sinDuplicados));
             console.info(`[KARA] Migración: eliminados ${localAdded.length - sinDuplicados.length} productos con IDs legacy duplicados.`);
