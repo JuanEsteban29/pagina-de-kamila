@@ -202,16 +202,20 @@ let dbProductos = [];
 
 async function cargarProductosDB() {
     try {
-        // Intentar primero desde el API en vivo del servidor
+        // 1. Intentar primero desde el API en vivo del servidor Vercel
         let res = await fetch("/api/productos", { cache: "no-store" });
         if (!res.ok) {
-            // Fallback con parametro no-cache
+            // 2. Fallback local con timestamp no-cache
             res = await fetch("js/productos.json?v=" + Date.now());
+        }
+        if (!res.ok) {
+            // 3. Fallback directo al repositorio GitHub raw en vivo
+            res = await fetch("https://raw.githubusercontent.com/JuanEsteban29/pagina-de-kamila/main/js/productos.json?v=" + Date.now());
         }
         if (res.ok) {
             dbProductos = await res.json();
         } else {
-            throw new Error("No se pudo cargar el catálogo");
+            throw new Error("No se pudo cargar el catálogo de ninguna fuente");
         }
     } catch (e) {
         console.warn("CORS o servidor no disponible. Cargando catálogo por defecto:", e);

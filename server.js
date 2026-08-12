@@ -261,7 +261,17 @@ app.post('/api/productos', async (req, res) => {
     // 1. Guardar prioritariamente en el archivo js/productos.json en disco
     guardarEnDisco(listaProductos);
 
-    // 2. Intentar guardar en MySQL si la base de datos está disponible
+    // 2. Intentar sincronizar con GitHub si el token está disponible
+    let githubStatus = 'sin_token';
+    try {
+        const ghResult = await sincronizarConGitHub(listaProductos);
+        githubStatus = ghResult.status;
+    } catch (err) {
+        console.warn('[KARA Server] Error al sincronizar con GitHub:', err.message);
+        githubStatus = 'error: ' + err.message;
+    }
+
+    // 3. Intentar guardar en MySQL si la base de datos está disponible
     let mysqlStatus = 'desconectado';
     try {
         const db = getPool();
@@ -279,9 +289,66 @@ app.post('/api/productos', async (req, res) => {
         success: true,
         count: listaProductos.length,
         storage: 'disco',
+        github: githubStatus,
         mysql: mysqlStatus
     });
 });
+
+// Función auxiliar para hacer commit del catálogo directamente a GitHub
+async function sincronizarConGitHub(lista) {
+    const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
+    if (!token) return { status: 'sin_token' };
+
+    try {
+        const repo = process.env.GITHUB_REPO || 'JuanEsteban29/pagina-de-kamila';
+        const filePath = 'js/productos.json';
+
+        // 1. Obtener SHA actual del archivo en GitHub
+        const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'User-Agent': 'KARA-Sunset-Sync'
+            }
+        });
+
+        let sha = '';
+        if (getRes.ok) {
+            const getData = await getRes.json();
+            sha = getData.sha;
+        }
+
+        // 2. Commit del nuevo contenido JSON
+        const contentBase64 = Buffer.from(JSON.stringify(lista, null, 4)).toString('base64');
+        const bodyPayload = {
+            message: 'Update products catalog via KARA Admin Panel 🌸',
+            content: contentBase64,
+            branch: 'main'
+        };
+        if (sha) bodyPayload.sha = sha;
+
+        const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'User-Agent': 'KARA-Sunset-Sync'
+            },
+            body: JSON.stringify(bodyPayload)
+        });
+
+        if (putRes.ok) {
+            console.log('[KARA Server] Catálogo guardado y desplegado automáticamente en GitHub. 🚀');
+            return { status: 'publicado_en_github' };
+        } else {
+            const errData = await putRes.json();
+            console.warn('[KARA Server] Error al hacer commit en GitHub:', errData);
+            return { status: 'error_github', details: errData };
+        }
+    } catch (err) {
+        console.warn('[KARA Server] Error en sincronizarConGitHub:', err.message);
+        return { status: 'error', message: err.message };
+    }
+}
 
 // 3.5. PUT /api/productos/:id -> Actualizar un producto específico
 app.put('/api/productos/:id', async (req, res) => {

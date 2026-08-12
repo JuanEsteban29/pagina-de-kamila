@@ -38,6 +38,7 @@ async function initAdmin() {
     setupToneBuilder();
     setupProductForm();
     setupCatalogListDelegation();
+    setupMultiDeviceSync();
     await setupSyncMode();
     loadAIModel();
     await loadCatalog();
@@ -1232,6 +1233,106 @@ function exportarJsonCompleto() {
     downloadAnchor.remove();
 
     mostrarNotificacion("Archivo productos.json respaldado con éxito. 📦");
+}
+
+// Configuración de la barra de sincronización multi-dispositivo
+function setupMultiDeviceSync() {
+    const btnExport = document.getElementById("btnExportJSON");
+    const btnImportTrigger = document.getElementById("btnImportJSONTrigger");
+    const inputImport = document.getElementById("inputImportJSON");
+    const btnCopy = document.getElementById("btnCopySyncData");
+    const btnPaste = document.getElementById("btnPasteSyncData");
+
+    if (btnExport && !btnExport.dataset.listened) {
+        btnExport.dataset.listened = "true";
+        btnExport.addEventListener("click", exportarJsonCompleto);
+    }
+
+    if (btnImportTrigger && inputImport && !btnImportTrigger.dataset.listened) {
+        btnImportTrigger.dataset.listened = "true";
+        btnImportTrigger.addEventListener("click", () => inputImport.click());
+
+        inputImport.addEventListener("change", (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    try {
+                        const parsed = JSON.parse(event.target.result);
+                        if (Array.isArray(parsed) && parsed.length > 0) {
+                            await aplicarListaSincronizada(parsed, "Archivo productos.json cargado correctamente. 📥");
+                        } else {
+                            alert("El archivo cargado no contiene un catálogo válido.");
+                        }
+                    } catch(err) {
+                        alert("Error al leer el archivo JSON: " + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+    }
+
+    if (btnCopy && !btnCopy.dataset.listened) {
+        btnCopy.dataset.listened = "true";
+        btnCopy.addEventListener("click", () => {
+            const jsonStr = JSON.stringify(catalogoCompleto);
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(jsonStr)
+                    .then(() => mostrarNotificacion("📋 Código de catálogo copiado. Pégalo en tu teléfono."))
+                    .catch(() => alert("Copia manualmente el catálogo desde exportar JSON."));
+            } else {
+                prompt("Copia este código de sincronización:", jsonStr);
+            }
+        });
+    }
+
+    if (btnPaste && !btnPaste.dataset.listened) {
+        btnPaste.dataset.listened = "true";
+        btnPaste.addEventListener("click", async () => {
+            let pastedText = "";
+            if (navigator.clipboard && navigator.clipboard.readText) {
+                try {
+                    pastedText = await navigator.clipboard.readText();
+                } catch(e) {}
+            }
+            if (!pastedText) {
+                pastedText = prompt("Pega aquí el código o contenido JSON del catálogo enviado desde el otro dispositivo:");
+            }
+
+            if (pastedText) {
+                try {
+                    const parsed = JSON.parse(pastedText.trim());
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        await aplicarListaSincronizada(parsed, "📲 Catálogo sincronizado desde otro dispositivo con éxito. ✓");
+                    } else {
+                        alert("El texto pegado no es un catálogo válido.");
+                    }
+                } catch(err) {
+                    alert("Formato de sincronización inválido. Asegúrate de haber copiado todo el código.");
+                }
+            }
+        });
+    }
+}
+
+// Aplica una lista importada a la memoria local y al servidor
+async function aplicarListaSincronizada(lista, msgExito) {
+    catalogoCompleto = lista;
+    localAddedProducts = lista.filter(p => Number(p.id) > 1000);
+    localUpdatedProducts = {};
+    lista.forEach(p => {
+        if (Number(p.id) <= 1000) {
+            localUpdatedProducts[String(p.id)] = p;
+        }
+    });
+
+    localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
+    localStorage.setItem('KARA_ADMIN_UPDATED', JSON.stringify(localUpdatedProducts));
+
+    await guardarEnServidor(lista);
+    renderCatalogList();
+    mostrarNotificacion(msgExito);
 }
 
 // Toast de notificación
