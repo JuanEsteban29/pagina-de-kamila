@@ -84,12 +84,20 @@ function leerProductosFallbackLocal() {
     return [];
 }
 
+// Middleware de normalización de rutas para Vercel Serverless Rewrites
+app.use((req, res, next) => {
+    if (!req.url.startsWith('/api') && (req.url.startsWith('/productos') || req.url.startsWith('/ping'))) {
+        req.url = '/api' + req.url;
+    }
+    next();
+});
+
 // ================================================
 // RUTAS DE API (Endpoints Supabase REST)
 // ================================================
 
 // 1. GET /api/ping -> Verificar estado del servidor y conexión con Supabase
-app.get('/api/ping', async (req, res) => {
+app.get(['/api/ping', '/ping'], async (req, res) => {
     let supabaseStatus = 'no_configurado';
 
     if (SUPABASE_KEY) {
@@ -114,7 +122,7 @@ app.get('/api/ping', async (req, res) => {
 });
 
 // 2. GET /api/productos -> Obtener catálogo de productos desde Supabase
-app.get('/api/productos', async (req, res) => {
+app.get(['/api/productos', '/productos'], async (req, res) => {
     if (SUPABASE_KEY) {
         try {
             const url = `${SUPABASE_URL}/rest/v1/productos?select=*&order=id.desc`;
@@ -143,7 +151,7 @@ app.get('/api/productos', async (req, res) => {
 });
 
 // 3. POST /api/productos -> Crear un nuevo producto en Supabase (id generado por Supabase)
-app.post('/api/productos', async (req, res) => {
+app.post(['/api/productos', '/productos'], async (req, res) => {
     const body = req.body;
     const item = Array.isArray(body) ? body[0] : body;
 
@@ -194,7 +202,7 @@ app.post('/api/productos', async (req, res) => {
 });
 
 // 4. PUT /api/productos/:id -> Actualizar un producto existente por su ID en Supabase
-app.put('/api/productos/:id', async (req, res) => {
+app.put(['/api/productos/:id', '/productos/:id'], async (req, res) => {
     const id = Number(req.params.id);
     const body = req.body;
 
@@ -246,7 +254,7 @@ app.put('/api/productos/:id', async (req, res) => {
 });
 
 // 5. DELETE /api/productos/:id -> Eliminar un producto por su ID en Supabase
-app.delete('/api/productos/:id', async (req, res) => {
+app.delete(['/api/productos/:id', '/productos/:id'], async (req, res) => {
     const id = Number(req.params.id);
 
     if (!id || isNaN(id)) {
