@@ -452,13 +452,13 @@ function procesarPrediccionesIA(predictions) {
 }
 
 // ==========================================
-// 5. CARGA Y GESTIÓN DEL CATÁLOGO
+// 5. CARGA Y GESTIÓN DEL CATÁLOGO DESDE SUPABASE
 // ==========================================
 async function loadCatalog() {
     const listContainer = document.getElementById("catalogList");
     if (!listContainer) return;
 
-    listContainer.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);">Cargando catálogo...</div>`;
+    listContainer.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);">Cargando catálogo desde Supabase...</div>`;
 
     // Catálogo base fallback
     const dbFallback = [
@@ -485,68 +485,20 @@ async function loadCatalog() {
         { id: 21, title: "Lip Gloss Dolce Bella",                 price: 4.00,  category: "labios",     img: "assets/images/LIP GLOSS.jpeg",          stock: 13, tones: "C02, D3, D4, D6, D5, 06, 04, D1, 01, 03" }
     ];
 
-    let dbOrig = [];
-
-    // Intentar leer de /api/productos o productos.json
     try {
         let res = await fetch("/api/productos", { cache: "no-store" });
         if (!res.ok) {
             res = await fetch("js/productos.json?v=" + Date.now());
         }
         if (res.ok) {
-            dbOrig = await res.json();
+            const data = await res.json();
+            catalogoCompleto = Array.isArray(data) && data.length > 0 ? data : dbFallback;
         } else {
-            dbOrig = dbFallback;
+            catalogoCompleto = dbFallback;
         }
     } catch (e) {
         console.info("[KARA Admin] Sin servidor detectado. Usando catálogo base local.");
-        dbOrig = dbFallback;
-    }
-
-    if (!Array.isArray(dbOrig) || dbOrig.length === 0) {
-        dbOrig = dbFallback;
-    }
-
-    // Fusionar de forma limpia sin duplicados en modo local o servidor
-    if (!serverSyncActive) {
-        const deletedSet = new Set(localDeletedIds.map(Number));
-        let list = dbOrig.filter(p => !deletedSet.has(Number(p.id)));
-
-        // Aplicar actualizaciones locales sobre los productos base
-        list = list.map(p => {
-            const key = String(p.id);
-            return localUpdatedProducts[key] ? { ...p, ...localUpdatedProducts[key] } : p;
-        });
-
-        // Agregar los productos nuevos creados en modo local que no existan aún en el listado
-        for (const localP of localAddedProducts) {
-            const numId = Number(localP.id);
-            if (deletedSet.has(numId)) continue;
-
-            const existingIndex = list.findIndex(p => Number(p.id) === numId);
-            if (existingIndex !== -1) {
-                list[existingIndex] = { ...list[existingIndex], ...localP };
-            } else {
-                list.push(localP);
-            }
-        }
-
-        // Garantizar deduplicación estricta por ID
-        const catalogMap = new Map();
-        for (const item of list) {
-            if (item && item.id) {
-                catalogMap.set(Number(item.id), item);
-            }
-        }
-        catalogoCompleto = Array.from(catalogMap.values());
-    } else {
-        const catalogMap = new Map();
-        for (const item of dbOrig) {
-            if (item && item.id) {
-                catalogMap.set(Number(item.id), item);
-            }
-        }
-        catalogoCompleto = Array.from(catalogMap.values());
+        catalogoCompleto = dbFallback;
     }
 
     renderCatalogList();
@@ -1004,7 +956,7 @@ function setupProductForm() {
     });
 }
 
-// ACTUALIZAR PRODUCTO EXISTENTE
+// ACTUALIZAR PRODUCTO EXISTENTE EN SUPABASE
 async function actualizarProducto(id, data) {
     const targetId = Number(id);
     const index = catalogoCompleto.findIndex(p => Number(p.id) === targetId);
@@ -1017,171 +969,76 @@ async function actualizarProducto(id, data) {
     const prodActualizado = {
         ...catalogoCompleto[index],
         ...data,
-        id: targetId // PRESERVAR ID ORIGINAL
+        id: targetId // CONSERVAR EXACTAMENTE EL MISMO ID
     };
 
-    if (serverSyncActive) {
-        catalogoCompleto[index] = prodActualizado;
+    try {
+        const res = await fetch(`/api/productos/${targetId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(prodActualizado)
+        });
 
-        // Intentar actualizar vía PUT o POST en servidor
-        let guardado = false;
-        try {
-            const res = await fetch(`/api/productos/${targetId}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(prodActualizado)
-            });
-            guardado = res.ok;
-        } catch(e) {
-            guardado = false;
-        }
+        if (res.ok) {
+            const resData = await res.json();
+            const prodFinal = resData.product || prodActualizado;
+            catalogoCompleto[index] = prodFinal;
 
-        if (!guardado) {
-            guardado = await guardarEnServidor(catalogoCompleto);
-        }
-
-        if (guardado) {
-            mostrarNotificacion(`Producto "${data.title}" actualizado con éxito. ✓`);
+            mostrarNotificacion(`Producto "${data.title}" actualizado en Supabase con éxito. ✓`);
             cancelarEdicion();
             renderCatalogList();
         } else {
-            alert("No se pudo guardar la actualización en el servidor.");
+            const errText = await res.text();
+            alert("No se pudo actualizar el producto en Supabase: " + errText);
         }
-    } else {
-        // MODO ESTÁTICO (localStorage)
-        catalogoCompleto[index] = prodActualizado;
-
-        // Si pertenece a productos agregados localmente, actualizarlo ahí
-        const localIdx = localAddedProducts.findIndex(p => Number(p.id) === targetId);
-        if (localIdx !== -1) {
-            localAddedProducts[localIdx] = prodActualizado;
-            localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
-        } else {
-            // Si es un producto base original, guardar su actualización aislada
-            localUpdatedProducts[String(targetId)] = prodActualizado;
-            localStorage.setItem('KARA_ADMIN_UPDATED', JSON.stringify(localUpdatedProducts));
-        }
-
-        mostrarNotificacion(`Producto "${data.title}" actualizado localmente. ✓`);
-        cancelarEdicion();
-        renderCatalogList();
+    } catch(e) {
+        alert("Error de conexión al actualizar en Supabase: " + e.message);
     }
 }
 
-// CREAR NUEVO PRODUCTO
+// CREAR NUEVO PRODUCTO EN SUPABASE
 async function crearProducto(data) {
-    // Generar un ID único mayor al máximo existente
-    const allIds = [
-        ...catalogoCompleto.map(p => Number(p.id) || 0),
-        ...localAddedProducts.map(p => Number(p.id) || 0),
-        1000
-    ];
-    const newId = Math.max(...allIds) + 1;
-
-    const nuevoProducto = {
-        ...data,
-        id: newId
-    };
-
-    if (serverSyncActive) {
-        catalogoCompleto.unshift(nuevoProducto);
-        const guardado = await guardarEnServidor(catalogoCompleto);
-        if (guardado) {
-            mostrarNotificacion(`Producto "${data.title}" creado permanentemente. ✓`);
-            cancelarEdicion();
-            renderCatalogList();
-        } else {
-            catalogoCompleto.shift();
-            alert("Hubo un error al crear el producto en el servidor.");
-        }
-    } else {
-        // MODO ESTÁTICO (localStorage)
-        localAddedProducts.unshift(nuevoProducto);
-        try {
-            localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
-        } catch(e) {
-            // Si supera la cuota de localStorage, asignar imagen liviana
-            nuevoProducto.img = "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400";
-            localAddedProducts[0] = nuevoProducto;
-            localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
-            mostrarNotificacion("⚠️ Imagen optimizada por límite de memoria local.");
-        }
-
-        // Limpiar de eliminados si existía una id previa igual
-        localDeletedIds = localDeletedIds.filter(id => Number(id) !== newId);
-        localStorage.setItem('KARA_ADMIN_DELETED', JSON.stringify(localDeletedIds));
-
-        // Insertar en catálogo actual
-        catalogoCompleto.unshift(nuevoProducto);
-
-        mostrarNotificacion(`Producto "${data.title}" creado con éxito. ✓`);
-        cancelarEdicion();
-        renderCatalogList();
-    }
-}
-
-// ELIMINAR PRODUCTO
-async function eliminarProducto(id) {
-    const numId = Number(id);
-
-    if (serverSyncActive) {
-        let guardado = false;
-        try {
-            const res = await fetch(`/api/productos/${numId}`, { method: "DELETE" });
-            guardado = res.ok;
-        } catch(e) {
-            guardado = false;
-        }
-
-        if (!guardado) {
-            const nuevoCatalogo = catalogoCompleto.filter(p => Number(p.id) !== numId);
-            guardado = await guardarEnServidor(nuevoCatalogo);
-        }
-
-        if (guardado) {
-            catalogoCompleto = catalogoCompleto.filter(p => Number(p.id) !== numId);
-            mostrarNotificacion("Producto eliminado con éxito. ✓");
-            renderCatalogList();
-        } else {
-            alert("No se pudo eliminar el producto en el servidor.");
-        }
-    } else {
-        // MODO ESTÁTICO (localStorage)
-        const esLocal = localAddedProducts.some(p => Number(p.id) === numId);
-
-        if (esLocal) {
-            localAddedProducts = localAddedProducts.filter(p => Number(p.id) !== numId);
-            localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(localAddedProducts));
-        }
-
-        if (localUpdatedProducts[String(numId)]) {
-            delete localUpdatedProducts[String(numId)];
-            localStorage.setItem('KARA_ADMIN_UPDATED', JSON.stringify(localUpdatedProducts));
-        }
-
-        if (!esLocal && !localDeletedIds.includes(numId)) {
-            localDeletedIds.push(numId);
-            localStorage.setItem('KARA_ADMIN_DELETED', JSON.stringify(localDeletedIds));
-        }
-
-        catalogoCompleto = catalogoCompleto.filter(p => Number(p.id) !== numId);
-        mostrarNotificacion("Producto eliminado localmente. ✓");
-        renderCatalogList();
-    }
-}
-
-// Guardar array completo en el servidor
-async function guardarEnServidor(lista) {
     try {
         const res = await fetch("/api/productos", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(lista)
+            body: JSON.stringify(data)
         });
-        return res.ok;
-    } catch (e) {
-        console.error("[KARA Admin] Error al guardar en servidor:", e);
-        return false;
+
+        if (res.ok) {
+            const resData = await res.json();
+            const nuevoProd = resData.product || { ...data, id: Date.now() };
+
+            // Supabase asigna el ID automático (identity bigint)
+            catalogoCompleto.unshift(nuevoProd);
+            mostrarNotificacion(`Producto "${data.title}" creado en Supabase con éxito. ✓`);
+            cancelarEdicion();
+            renderCatalogList();
+        } else {
+            const errText = await res.text();
+            alert("Error al crear el producto en Supabase: " + errText);
+        }
+    } catch(e) {
+        alert("Error de conexión al crear el producto en Supabase: " + e.message);
+    }
+}
+
+// ELIMINAR PRODUCTO DE SUPABASE
+async function eliminarProducto(id) {
+    const numId = Number(id);
+
+    try {
+        const res = await fetch(`/api/productos/${numId}`, { method: "DELETE" });
+        if (res.ok) {
+            catalogoCompleto = catalogoCompleto.filter(p => Number(p.id) !== numId);
+            mostrarNotificacion("Producto eliminado de Supabase con éxito. ✓");
+            renderCatalogList();
+        } else {
+            const errText = await res.text();
+            alert("No se pudo eliminar el producto en Supabase: " + errText);
+        }
+    } catch(e) {
+        alert("Error de conexión al eliminar en Supabase: " + e.message);
     }
 }
 

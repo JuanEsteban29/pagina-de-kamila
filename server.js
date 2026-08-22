@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const mysql = require('mysql2/promise');
 const path = require('path');
 const fs = require('fs');
 
@@ -15,209 +14,26 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Servir archivos estáticos del proyecto en la raíz
 app.use(express.static(__dirname));
 
-// Configuración del pool de conexión a MySQL
-let pool = null;
+// Configuración de Supabase
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vxswjaixnlfwgtqrwcf.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || '';
 
-function getPool() {
-    if (pool) return pool;
-
-    try {
-        const host = process.env.MYSQLHOST || process.env.MYSQL_HOST;
-        const user = process.env.MYSQLUSER || process.env.MYSQL_USER;
-        const password = process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD;
-        const database = process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE || 'railway';
-        const port = parseInt(process.env.MYSQLPORT || process.env.MYSQL_PORT || '3306');
-
-        if (host && user) {
-            console.log(`[KARA Server] Configurando pool de MySQL con Host: ${host}:${port}, DB: ${database}`);
-            pool = mysql.createPool({
-                host,
-                user,
-                password: password || '',
-                database,
-                port,
-                waitForConnections: true,
-                connectionLimit: 10,
-                queueLimit: 0,
-                connectTimeout: 20000,
-                enableKeepAlive: true,
-                keepAliveInitialDelay: 0
-            });
-        } else if (process.env.MYSQL_URL || process.env.MYSQL_PRIVATE_URL || process.env.DATABASE_URL) {
-            const urlStr = process.env.MYSQL_URL || process.env.MYSQL_PRIVATE_URL || process.env.DATABASE_URL;
-            console.log('[KARA Server] Configurando pool de MySQL usando URL de conexión...');
-            pool = mysql.createPool(urlStr);
-        } else {
-            console.log('[KARA Server] No se detectaron variables de MySQL en Railway. Usando modo de persistencia local en disco (js/productos.json).');
-            pool = null;
-        }
-    } catch (e) {
-        console.error('[KARA Server] Error al crear pool de MySQL:', e.message);
-        pool = null;
+// Cabeceras HTTP para autenticación y consulta a Supabase PostgREST
+function getSupabaseHeaders(options = {}) {
+    const headers = {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json'
+    };
+    if (options.prefer) {
+        headers['Prefer'] = options.prefer;
     }
-    return pool;
+    return headers;
 }
 
-// Inicialización automática de la tabla de productos si no existe
-async function initDatabase() {
-    try {
-        const db = getPool();
-        if (!db) return;
-
-        // 1. Crear tabla si no existe (usando BIGINT para IDs seguros de JavaScript)
-        await db.query(`
-            CREATE TABLE IF NOT EXISTS productos (
-                id BIGINT PRIMARY KEY AUTO_INCREMENT,
-                title VARCHAR(255) NOT NULL,
-                price DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-                category VARCHAR(100) NOT NULL DEFAULT 'labios',
-                img LONGTEXT,
-                images LONGTEXT,
-                stock INT NOT NULL DEFAULT 1,
-                tones TEXT,
-                toneObjects LONGTEXT,
-                badge VARCHAR(100) DEFAULT '',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-        `);
-
-        // Asegurar que el id sea BIGINT en caso de que se haya creado previamente como INT
-        try {
-            await db.query(`ALTER TABLE productos MODIFY id BIGINT AUTO_INCREMENT;`);
-        } catch (e) {}
-
-        console.log('[KARA Server] Tabla "productos" verificada y lista en MySQL. 🚀');
-
-        // 2. Comprobar si la tabla está vacía y sembrarla con los productos iniciales de js/productos.json
-        const [rows] = await db.query('SELECT COUNT(*) AS total FROM productos');
-        if (rows && rows[0] && rows[0].total === 0) {
-            console.log('[KARA Server] La tabla "productos" en MySQL está vacía. Sembrando productos iniciales...');
-            const jsonPath = path.join(__dirname, 'js', 'productos.json');
-            if (fs.existsSync(jsonPath)) {
-                const baseProductos = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-                await sincronizarListaConMySQL(db, baseProductos);
-                console.log(`[KARA Server] ¡Base de datos MySQL sembrada con éxito con ${baseProductos.length} productos! 🎉`);
-            }
-        }
-    } catch (err) {
-        console.warn('[KARA Server] Aviso al inicializar base de datos MySQL:', err.message);
-    }
-}
-
-// Inicializar en segundo plano al arrancar el servidor
-initDatabase();
-
-// Función auxiliar para sincronizar la lista de productos con MySQL (con borrado de eliminados)
-async function sincronizarListaConMySQL(db, lista) {
-    if (!db) return;
-    if (!Array.isArray(lista)) return;
-
-    try {
-        // 1. Obtener los IDs válidos presentes en el nuevo catálogo
-        const idsValidos = lista
-            .map(p => parseInt(p.id))
-            .filter(id => !isNaN(id) && id > 0);
-
-        // 2. Si hay productos en la lista, borrar de MySQL cualquier producto que haya sido eliminado
-        if (idsValidos.length > 0) {
-            const placeholders = idsValidos.map(() => '?').join(',');
-            await db.query(`DELETE FROM productos WHERE id NOT IN (${placeholders})`, idsValidos);
-        } else {
-            await db.query('TRUNCATE TABLE productos');
-        }
-
-        // 3. Insertar o actualizar cada producto en MySQL
-        const queryUpsert = `
-            INSERT INTO productos (id, title, price, category, img, images, stock, tones, toneObjects, badge)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-                title = VALUES(title),
-                price = VALUES(price),
-                category = VALUES(category),
-                img = VALUES(img),
-                images = VALUES(images),
-                stock = VALUES(stock),
-                tones = VALUES(tones),
-                toneObjects = VALUES(toneObjects),
-                badge = VALUES(badge);
-        `;
-
-        for (const p of lista) {
-            const idVal = (p.id && !isNaN(parseInt(p.id)) && parseInt(p.id) > 0) ? parseInt(p.id) : null;
-            const imagesStr = JSON.stringify(p.images || []);
-            const toneObjectsStr = JSON.stringify(p.toneObjects || []);
-            const priceVal = parseFloat(p.price) || 0;
-            const stockVal = parseInt(p.stock) || 0;
-
-            await db.query(queryUpsert, [
-                idVal,
-                p.title || 'Producto sin título',
-                priceVal,
-                p.category || 'labios',
-                p.img || '',
-                imagesStr,
-                stockVal,
-                p.tones || '',
-                toneObjectsStr,
-                p.badge || ''
-            ]);
-        }
-    } catch (err) {
-        console.error('[KARA Server] Error al sincronizar con MySQL:', err.message);
-        throw err;
-    }
-}
-
-// Función auxiliar para actualizar el archivo js/productos.json en disco
-function guardarEnDisco(lista) {
-    try {
-        const jsonPath = path.join(__dirname, 'js', 'productos.json');
-        fs.writeFileSync(jsonPath, JSON.stringify(lista, null, 4), 'utf8');
-        console.log(`[KARA Server] Archivo js/productos.json actualizado en disco (${lista.length} productos).`);
-        return true;
-    } catch (err) {
-        console.error('[KARA Server] Error al escribir en disco:', err.message);
-        return false;
-    }
-}
-
-// ================================================
-// RUTAS DE API (Endpoints)
-// ================================================
-
-// 1. GET /api/ping -> Verificar estado del servidor
-app.get('/api/ping', (req, res) => {
-    res.json({ status: 'ok' });
-});
-
-// 2. GET /api/productos -> Obtener catálogo de productos
-app.get('/api/productos', async (req, res) => {
-    try {
-        const db = getPool();
-        if (db) {
-            const [rows] = await db.query('SELECT * FROM productos ORDER BY id DESC');
-            if (rows && rows.length > 0) {
-                return res.json(parsearFilasProductos(rows));
-            }
-        }
-    } catch (err) {
-        console.warn('[KARA Server] Error al leer MySQL (usando productos.json en disco):', err.message);
-    }
-
-    // Fallback: servir archivo js/productos.json local
-    try {
-        const jsonPath = path.join(__dirname, 'js', 'productos.json');
-        if (fs.existsSync(jsonPath)) {
-            const fallbackData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-            return res.json(fallbackData);
-        }
-    } catch (e) {}
-
-    res.json([]);
-});
-
-// Parseador de filas MySQL a objetos JavaScript
-function parsearFilasProductos(rows) {
+// Convertir respuesta de Supabase a formato estandarizado para la aplicación
+function parsearProductosSupabase(rows) {
+    if (!Array.isArray(rows)) return [];
     return rows.map(row => {
         let images = [];
         let toneObjects = [];
@@ -246,197 +62,231 @@ function parsearFilasProductos(rows) {
             img: row.img || '',
             images: Array.isArray(images) ? images : [],
             stock: parseInt(row.stock) || 0,
+            badge: row.badge || '',
             tones: row.tones || '',
             toneObjects: Array.isArray(toneObjects) ? toneObjects : [],
-            badge: row.badge || ''
+            created_at: row.created_at || null,
+            updated_at: row.updated_at || null
         };
     });
 }
 
-// 3. POST /api/productos -> Guardar / Actualizar / Sincronizar catálogo
-app.post('/api/productos', async (req, res) => {
-    const payload = req.body;
-    const listaProductos = Array.isArray(payload) ? payload : [payload];
-
-    // 1. Guardar prioritariamente en el archivo js/productos.json en disco
-    guardarEnDisco(listaProductos);
-
-    // 2. Intentar sincronizar con GitHub si el token está disponible
-    let githubStatus = 'sin_token';
+// Función auxiliar para leer productos desde archivo local js/productos.json (Fallback de seguridad)
+function leerProductosFallbackLocal() {
     try {
-        const ghResult = await sincronizarConGitHub(listaProductos);
-        githubStatus = ghResult.status;
-    } catch (err) {
-        console.warn('[KARA Server] Error al sincronizar con GitHub:', err.message);
-        githubStatus = 'error: ' + err.message;
-    }
-
-    // 3. Intentar guardar en MySQL si la base de datos está disponible
-    let mysqlStatus = 'desconectado';
-    try {
-        const db = getPool();
-        if (db) {
-            await sincronizarListaConMySQL(db, listaProductos);
-            mysqlStatus = 'sincronizado';
+        const jsonPath = path.join(__dirname, 'js', 'productos.json');
+        if (fs.existsSync(jsonPath)) {
+            return JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
         }
-    } catch (err) {
-        console.warn('[KARA Server] Advertencia al sincronizar con MySQL (cambio guardado en disco):', err.message);
-        mysqlStatus = 'error: ' + err.message;
+    } catch (e) {
+        console.warn('[KARA Server] Error al leer productos.json fallback:', e.message);
+    }
+    return [];
+}
+
+// ================================================
+// RUTAS DE API (Endpoints Supabase REST)
+// ================================================
+
+// 1. GET /api/ping -> Verificar estado del servidor y conexión con Supabase
+app.get('/api/ping', async (req, res) => {
+    let supabaseStatus = 'no_configurado';
+
+    if (SUPABASE_KEY) {
+        try {
+            const fetchRes = await fetch(`${SUPABASE_URL}/rest/v1/productos?select=id&limit=1`, {
+                method: 'GET',
+                headers: getSupabaseHeaders(),
+                cache: 'no-store'
+            });
+            supabaseStatus = fetchRes.ok ? 'conectado' : `error: ${fetchRes.status}`;
+        } catch (e) {
+            supabaseStatus = `error_conexion: ${e.message}`;
+        }
     }
 
-    // Siempre responder HTTP 200 OK para no bloquear el administrador
     res.json({
-        success: true,
-        count: listaProductos.length,
-        storage: 'disco',
-        github: githubStatus,
-        mysql: mysqlStatus
+        status: 'ok',
+        provider: 'supabase',
+        supabase_url: SUPABASE_URL,
+        supabase_status: supabaseStatus
     });
 });
 
-// Función auxiliar para hacer commit del catálogo directamente a GitHub
-async function sincronizarConGitHub(lista) {
-    const token = process.env.GITHUB_TOKEN || process.env.GH_TOKEN;
-    if (!token) return { status: 'sin_token' };
-
-    try {
-        const repo = process.env.GITHUB_REPO || 'JuanEsteban29/pagina-de-kamila';
-        const filePath = 'js/productos.json';
-
-        // 1. Obtener SHA actual del archivo en GitHub
-        const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'User-Agent': 'KARA-Sunset-Sync'
-            }
-        });
-
-        let sha = '';
-        if (getRes.ok) {
-            const getData = await getRes.json();
-            sha = getData.sha;
-        }
-
-        // 2. Commit del nuevo contenido JSON
-        const contentBase64 = Buffer.from(JSON.stringify(lista, null, 4)).toString('base64');
-        const bodyPayload = {
-            message: 'Update products catalog via KARA Admin Panel 🌸',
-            content: contentBase64,
-            branch: 'main'
-        };
-        if (sha) bodyPayload.sha = sha;
-
-        const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-                'User-Agent': 'KARA-Sunset-Sync'
-            },
-            body: JSON.stringify(bodyPayload)
-        });
-
-        if (putRes.ok) {
-            console.log('[KARA Server] Catálogo guardado y desplegado automáticamente en GitHub. 🚀');
-            return { status: 'publicado_en_github' };
-        } else {
-            const errData = await putRes.json();
-            console.warn('[KARA Server] Error al hacer commit en GitHub:', errData);
-            return { status: 'error_github', details: errData };
-        }
-    } catch (err) {
-        console.warn('[KARA Server] Error en sincronizarConGitHub:', err.message);
-        return { status: 'error', message: err.message };
-    }
-}
-
-// 3.5. PUT /api/productos/:id -> Actualizar un producto específico
-app.put('/api/productos/:id', async (req, res) => {
-    const id = parseInt(req.params.id);
-    const prodActualizado = { ...req.body, id };
-
-    try {
-        // 1. Leer y actualizar archivo js/productos.json en disco
-        const jsonPath = path.join(__dirname, 'js', 'productos.json');
-        let lista = [];
-        if (fs.existsSync(jsonPath)) {
-            try {
-                lista = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-            } catch (e) {
-                lista = [];
-            }
-        }
-
-        const idx = lista.findIndex(p => parseInt(p.id) === id);
-        if (idx !== -1) {
-            lista[idx] = { ...lista[idx], ...prodActualizado };
-        } else {
-            lista.push(prodActualizado);
-        }
-        guardarEnDisco(lista);
-
-        // 2. Actualizar en MySQL si está disponible
-        let mysqlStatus = 'desconectado';
+// 2. GET /api/productos -> Obtener catálogo de productos desde Supabase
+app.get('/api/productos', async (req, res) => {
+    if (SUPABASE_KEY) {
         try {
-            const db = getPool();
-            if (db) {
-                await sincronizarListaConMySQL(db, [prodActualizado]);
-                mysqlStatus = 'sincronizado';
+            const url = `${SUPABASE_URL}/rest/v1/productos?select=*&order=id.desc`;
+            const fetchRes = await fetch(url, {
+                method: 'GET',
+                headers: getSupabaseHeaders(),
+                cache: 'no-store'
+            });
+
+            if (fetchRes.ok) {
+                const rows = await fetchRes.json();
+                return res.json(parsearProductosSupabase(rows));
+            } else {
+                console.warn(`[KARA Server] Supabase GET HTTP ${fetchRes.status}. Usando fallback local.`);
             }
         } catch (err) {
-            console.warn('[KARA Server] Advertencia al actualizar en MySQL:', err.message);
-            mysqlStatus = 'error: ' + err.message;
+            console.warn('[KARA Server] Error al consultar Supabase (usando fallback local):', err.message);
         }
-
-        res.json({ success: true, product: prodActualizado, mysql: mysqlStatus });
-    } catch (err) {
-        console.error('[KARA Server] Error al actualizar producto:', err.message);
-        res.status(500).json({ error: 'Error al actualizar producto', details: err.message });
+    } else {
+        console.info('[KARA Server] SUPABASE_ANON_KEY no configurada aún en el servidor. Usando catálogo local.');
     }
+
+    // Fallback local en disco
+    const fallbackData = leerProductosFallbackLocal();
+    res.json(fallbackData);
 });
 
-// 4. DELETE /api/productos/:id -> Eliminar un producto específico
-app.delete('/api/productos/:id', async (req, res) => {
-    const id = parseInt(req.params.id);
+// 3. POST /api/productos -> Crear un nuevo producto en Supabase (id generado por Supabase)
+app.post('/api/productos', async (req, res) => {
+    const body = req.body;
+    const item = Array.isArray(body) ? body[0] : body;
 
-    try {
-        // 1. Eliminar del archivo json en disco
-        const jsonPath = path.join(__dirname, 'js', 'productos.json');
-        let lista = [];
-        if (fs.existsSync(jsonPath)) {
-            lista = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-        }
-        lista = lista.filter(p => parseInt(p.id) !== id);
-        guardarEnDisco(lista);
+    if (!item) {
+        return res.status(400).json({ error: 'Payload de producto no válido' });
+    }
 
-        // 2. Eliminar de MySQL
+    const payloadSupabase = {
+        title: item.title || 'Nuevo Producto',
+        price: parseFloat(item.price) || 0,
+        category: item.category || 'labios',
+        img: item.img || '',
+        images: Array.isArray(item.images) ? item.images : [],
+        stock: parseInt(item.stock) || 0,
+        badge: item.badge || '',
+        tones: item.tones || '',
+        toneObjects: Array.isArray(item.toneObjects) ? item.toneObjects : []
+    };
+
+    if (SUPABASE_KEY) {
         try {
-            const db = getPool();
-            if (db) {
-                await db.query('DELETE FROM productos WHERE id = ?', [id]);
-            }
-        } catch (e) {
-            console.warn('[KARA Server] Advertencia al borrar de MySQL:', e.message);
-        }
+            const fetchRes = await fetch(`${SUPABASE_URL}/rest/v1/productos`, {
+                method: 'POST',
+                headers: getSupabaseHeaders({ prefer: 'return=representation' }),
+                body: JSON.stringify(payloadSupabase)
+            });
 
-        res.json({ success: true, id });
-    } catch (err) {
-        console.error('[KARA Server] Error al eliminar:', err.message);
-        res.status(500).json({ error: 'Error al eliminar producto', details: err.message });
+            if (fetchRes.ok) {
+                const createdRows = await fetchRes.json();
+                const createdProduct = parsearProductosSupabase(createdRows)[0];
+                return res.json({
+                    success: true,
+                    product: createdProduct,
+                    storage: 'supabase'
+                });
+            } else {
+                const errorText = await fetchRes.text();
+                console.error('[KARA Server] Error al crear en Supabase:', fetchRes.status, errorText);
+                return res.status(fetchRes.status).json({ error: 'Error de Supabase', details: errorText });
+            }
+        } catch (err) {
+            console.error('[KARA Server] Excepción al crear en Supabase:', err.message);
+            return res.status(500).json({ error: 'Excepción de servidor', details: err.message });
+        }
     }
+
+    res.status(503).json({ error: 'Supabase no está configurado con claves en el servidor.' });
 });
 
-// 5. Ruta Catch-All GET * -> Servir aplicación web (index.html)
+// 4. PUT /api/productos/:id -> Actualizar un producto existente por su ID en Supabase
+app.put('/api/productos/:id', async (req, res) => {
+    const id = Number(req.params.id);
+    const body = req.body;
+
+    if (!id || isNaN(id)) {
+        return res.status(400).json({ error: 'ID de producto no válido' });
+    }
+
+    const payloadSupabase = {
+        title: body.title,
+        price: parseFloat(body.price) || 0,
+        category: body.category,
+        img: body.img,
+        images: Array.isArray(body.images) ? body.images : [],
+        stock: parseInt(body.stock) || 0,
+        badge: body.badge || '',
+        tones: body.tones || '',
+        toneObjects: Array.isArray(body.toneObjects) ? body.toneObjects : [],
+        updated_at: new Date().toISOString()
+    };
+
+    if (SUPABASE_KEY) {
+        try {
+            const fetchRes = await fetch(`${SUPABASE_URL}/rest/v1/productos?id=eq.${id}`, {
+                method: 'PATCH',
+                headers: getSupabaseHeaders({ prefer: 'return=representation' }),
+                body: JSON.stringify(payloadSupabase)
+            });
+
+            if (fetchRes.ok) {
+                const updatedRows = await fetchRes.json();
+                const updatedProduct = parsearProductosSupabase(updatedRows)[0] || { ...payloadSupabase, id };
+                return res.json({
+                    success: true,
+                    product: updatedProduct,
+                    storage: 'supabase'
+                });
+            } else {
+                const errorText = await fetchRes.text();
+                console.error(`[KARA Server] Error al actualizar ID ${id} en Supabase:`, fetchRes.status, errorText);
+                return res.status(fetchRes.status).json({ error: 'Error al actualizar en Supabase', details: errorText });
+            }
+        } catch (err) {
+            console.error('[KARA Server] Excepción al actualizar en Supabase:', err.message);
+            return res.status(500).json({ error: 'Excepción de servidor', details: err.message });
+        }
+    }
+
+    res.status(503).json({ error: 'Supabase no está configurado con claves en el servidor.' });
+});
+
+// 5. DELETE /api/productos/:id -> Eliminar un producto por su ID en Supabase
+app.delete('/api/productos/:id', async (req, res) => {
+    const id = Number(req.params.id);
+
+    if (!id || isNaN(id)) {
+        return res.status(400).json({ error: 'ID de producto no válido' });
+    }
+
+    if (SUPABASE_KEY) {
+        try {
+            const fetchRes = await fetch(`${SUPABASE_URL}/rest/v1/productos?id=eq.${id}`, {
+                method: 'DELETE',
+                headers: getSupabaseHeaders()
+            });
+
+            if (fetchRes.ok) {
+                return res.json({ success: true, id, storage: 'supabase' });
+            } else {
+                const errorText = await fetchRes.text();
+                console.error(`[KARA Server] Error al eliminar ID ${id} en Supabase:`, fetchRes.status, errorText);
+                return res.status(fetchRes.status).json({ error: 'Error al eliminar de Supabase', details: errorText });
+            }
+        } catch (err) {
+            console.error('[KARA Server] Excepción al eliminar de Supabase:', err.message);
+            return res.status(500).json({ error: 'Excepción de servidor', details: err.message });
+        }
+    }
+
+    res.status(503).json({ error: 'Supabase no está configurado con claves en el servidor.' });
+});
+
+// 6. Ruta Catch-All GET * -> Servir aplicación web (index.html)
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Exportar la aplicación para compatibilidad con Vercel
+// Exportar la aplicación para Vercel Serverless
 module.exports = app;
 
-// Iniciar servidor Express en entornos tradicionales (Local, Railway, etc.)
+// Iniciar servidor Express en desarrollo local
 if (require.main === module) {
     app.listen(PORT, () => {
-        console.log(`[KARA Server] Servidor Express corriendo en el puerto ${PORT} 🚀`);
+        console.log(`[KARA Server] Servidor corriendo en el puerto ${PORT} (Supabase Backend) 🚀`);
     });
 }

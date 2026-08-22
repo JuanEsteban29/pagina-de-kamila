@@ -202,73 +202,35 @@ let dbProductos = [];
 
 async function cargarProductosDB() {
     try {
-        // 1. Intentar primero desde el API en vivo del servidor Vercel
+        // 1. Cargar el catálogo desde el API servidor conectado a Supabase
         let res = await fetch("/api/productos", { cache: "no-store" });
         if (!res.ok) {
-            // 2. Fallback local con timestamp no-cache
+            // 2. Fallback estático en disco si el servidor no responde
             res = await fetch("js/productos.json?v=" + Date.now());
-        }
-        if (!res.ok) {
-            // 3. Fallback directo al repositorio GitHub raw en vivo
-            res = await fetch("https://raw.githubusercontent.com/JuanEsteban29/pagina-de-kamila/main/js/productos.json?v=" + Date.now());
         }
         if (res.ok) {
             dbProductos = await res.json();
         } else {
-            throw new Error("No se pudo cargar el catálogo de ninguna fuente");
+            throw new Error("No se pudo cargar el catálogo desde Supabase ni desde el respaldo local.");
         }
     } catch (e) {
-        console.warn("CORS o servidor no disponible. Cargando catálogo por defecto:", e);
+        console.warn("[KARA] Servidor o Supabase no disponible. Usando catálogo base de respaldo:", e);
         dbProductos = [...dbProductosFallback];
     }
-
-    // Cargar adiciones, actualizaciones y eliminaciones locales hechas desde admin
-    const localAdded = JSON.parse(localStorage.getItem('KARA_ADMIN_ADDED')) || [];
-    const localUpdated = JSON.parse(localStorage.getItem('KARA_ADMIN_UPDATED')) || {};
-    const localDeleted = JSON.parse(localStorage.getItem('KARA_ADMIN_DELETED')) || [];
-
-    // Filtrar los que fueron marcados como borrados
-    const deletedSet = new Set(localDeleted.map(Number));
-    dbProductos = dbProductos.filter(p => !deletedSet.has(Number(p.id)));
-
-    // Aplicar actualizaciones sobre los productos existentes
-    dbProductos = dbProductos.map(p => {
-        const key = String(p.id);
-        return localUpdated[key] ? { ...p, ...localUpdated[key] } : p;
-    });
-
-    // Agregar o actualizar los productos añadidos desde admin
-    localAdded.forEach(localProd => {
-        let imgFinal = localProd.img;
-        if (typeof imgFinal === "string" && imgFinal.startsWith("KARA_SESSIMG:")) {
-            const imgId = imgFinal.replace("KARA_SESSIMG:", "");
-            imgFinal = sessionStorage.getItem(`KARA_IMG_${imgId}`) || "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&q=80&w=400";
-        }
-        const resolvedProd = { ...localProd, img: imgFinal };
-        
-        const idx = dbProductos.findIndex(p => Number(p.id) === Number(resolvedProd.id));
-        if (idx !== -1) {
-            dbProductos[idx] = { ...dbProductos[idx], ...resolvedProd };
-        } else {
-            dbProductos.push(resolvedProd);
-        }
-    });
 }
 
 
-// Estado global[cite: 6]
-let carrito    = JSON.parse(localStorage.getItem('KARA_CART')) || []; //[cite: 6]
-let favoritos  = JSON.parse(localStorage.getItem('KARA_FAVS')) || []; //[cite: 6]
-let productosVisibles = 4; //[cite: 6]
-const META_ENVIO_GRATIS = 15.00; //[cite: 6]
+// Estado global
+let carrito    = JSON.parse(localStorage.getItem('KARA_CART')) || [];
+let favoritos  = JSON.parse(localStorage.getItem('KARA_FAVS')) || [];
+let productosVisibles = 4;
+const META_ENVIO_GRATIS = 15.00;
 
 document.addEventListener("DOMContentLoaded", () => {
-    initApp(); //[cite: 6]
+    initApp();
 });
 
 async function initApp() {
-    // Migración: limpiar productos admin con IDs <= 1000 que colisionan con el catálogo base
-    migrarProductosAdminLegacy();
     await cargarProductosDB();
     renderProductos();
     actualizarInsignias();
@@ -276,30 +238,6 @@ async function initApp() {
     setupServicesDropdown();
     setupCartPanelEvents();
     initGSAP();
-}
-
-// Limpia del localStorage cualquier producto del admin con ID <= 1000
-// (IDs de versiones anteriores que colisionaban con el catálogo base de 21 productos)
-function migrarProductosAdminLegacy() {
-    try {
-        const localAdded = JSON.parse(localStorage.getItem('KARA_ADMIN_ADDED')) || [];
-        if (!Array.isArray(localAdded)) return;
-
-        let sinDuplicados = localAdded.filter(p => p && p.id && Number(p.id) > 1000);
-
-        const mapUnicos = new Map();
-        for (const p of sinDuplicados) {
-            mapUnicos.set(Number(p.id), p);
-        }
-        sinDuplicados = Array.from(mapUnicos.values());
-
-        if (sinDuplicados.length !== localAdded.length) {
-            localStorage.setItem('KARA_ADMIN_ADDED', JSON.stringify(sinDuplicados));
-            console.info(`[KARA] Migración: eliminados ${localAdded.length - sinDuplicados.length} productos con IDs legacy duplicados.`);
-        }
-    } catch(e) {
-        console.warn("[KARA] Error en migración de legacy IDs:", e);
-    }
 }
 
 // ==========================================
