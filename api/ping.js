@@ -17,9 +17,9 @@ module.exports = async (req, res) => {
                 },
                 cache: 'no-store'
             });
-            supabaseStatus = fetchRes.ok ? 'conectado' : `error: ${fetchRes.status}`;
+            supabaseStatus = fetchRes.ok ? 'conectado' : `error_http_${fetchRes.status}`;
         } catch (e) {
-            supabaseStatus = `error: ${e.message}`;
+            supabaseStatus = `error_dns_url: ${e.message}`;
         }
     }
 

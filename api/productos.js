@@ -48,12 +48,13 @@ module.exports = async (req, res) => {
             }
             return res.status(fetchRes.status).json([]);
         } catch (e) {
-            return res.status(500).json({ error: e.message });
+            console.error('[KARA API GET] Error:', e.message);
+            return res.status(500).json({ error: `Error de conexión con Supabase (${SUPABASE_URL}): ${e.message}` });
         }
     }
 
     if (req.method === 'POST') {
-        if (!SUPABASE_KEY) return res.status(503).json({ error: 'Falta SUPABASE_ANON_KEY' });
+        if (!SUPABASE_KEY) return res.status(503).json({ error: 'Falta configurar SUPABASE_ANON_KEY en Vercel' });
         const body = req.body || {};
         const item = Array.isArray(body) ? body[0] : body;
         const payload = {
@@ -80,7 +81,8 @@ module.exports = async (req, res) => {
             const errText = await fetchRes.text();
             return res.status(fetchRes.status).json({ error: errText });
         } catch (e) {
-            return res.status(500).json({ error: e.message });
+            console.error('[KARA API POST] Error:', e.message);
+            return res.status(500).json({ error: `No se pudo conectar a la URL de Supabase (${SUPABASE_URL}). Revisa la variable SUPABASE_URL en Vercel.` });
         }
     }
 

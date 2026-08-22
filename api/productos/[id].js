@@ -35,7 +35,6 @@ module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     if (req.method === 'OPTIONS') return res.status(200).end();
 
-    // Extraer ID de la URL o query param de Vercel
     let id = req.query.id;
     if (!id && req.url) {
         const parts = req.url.split('?')[0].split('/');
@@ -48,7 +47,7 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === 'PUT') {
-        if (!SUPABASE_KEY) return res.status(503).json({ error: 'Falta SUPABASE_ANON_KEY' });
+        if (!SUPABASE_KEY) return res.status(503).json({ error: 'Falta configurar SUPABASE_ANON_KEY en Vercel' });
         const body = req.body || {};
         const payload = {
             title: body.title,
@@ -76,12 +75,13 @@ module.exports = async (req, res) => {
             const errText = await fetchRes.text();
             return res.status(fetchRes.status).json({ error: errText });
         } catch (e) {
-            return res.status(500).json({ error: e.message });
+            console.error('[KARA API PUT] Error:', e.message);
+            return res.status(500).json({ error: `No se pudo conectar a la URL de Supabase (${SUPABASE_URL}). Revisa la variable SUPABASE_URL en Vercel.` });
         }
     }
 
     if (req.method === 'DELETE') {
-        if (!SUPABASE_KEY) return res.status(503).json({ error: 'Falta SUPABASE_ANON_KEY' });
+        if (!SUPABASE_KEY) return res.status(503).json({ error: 'Falta configurar SUPABASE_ANON_KEY en Vercel' });
         try {
             const fetchRes = await fetch(`${SUPABASE_URL}/rest/v1/productos?id=eq.${numId}`, {
                 method: 'DELETE',
@@ -93,7 +93,8 @@ module.exports = async (req, res) => {
             const errText = await fetchRes.text();
             return res.status(fetchRes.status).json({ error: errText });
         } catch (e) {
-            return res.status(500).json({ error: e.message });
+            console.error('[KARA API DELETE] Error:', e.message);
+            return res.status(500).json({ error: `No se pudo conectar a la URL de Supabase (${SUPABASE_URL}). Revisa la variable SUPABASE_URL en Vercel.` });
         }
     }
 
