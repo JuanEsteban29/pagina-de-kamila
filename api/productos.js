@@ -1,4 +1,11 @@
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vxswjaixnlfwgtqrwcf.supabase.co';
+function getSupabaseUrl(path = '') {
+    let baseUrl = (process.env.SUPABASE_URL || 'https://vxswjaixnlfwgtqrwcf.supabase.co').trim().replace(/\/+$/, '');
+    if (baseUrl.endsWith('/rest/v1')) {
+        baseUrl = baseUrl.substring(0, baseUrl.length - 8).replace(/\/+$/, '');
+    }
+    return `${baseUrl}/rest/v1${path}`;
+}
+
 const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 function getHeaders(prefer) {
@@ -38,7 +45,7 @@ module.exports = async (req, res) => {
     if (req.method === 'GET') {
         if (!SUPABASE_KEY) return res.status(200).json([]);
         try {
-            const fetchRes = await fetch(`${SUPABASE_URL}/rest/v1/productos?select=*&order=id.desc`, {
+            const fetchRes = await fetch(getSupabaseUrl('/productos?select=*&order=id.desc'), {
                 headers: getHeaders(),
                 cache: 'no-store'
             });
@@ -49,7 +56,7 @@ module.exports = async (req, res) => {
             return res.status(fetchRes.status).json([]);
         } catch (e) {
             console.error('[KARA API GET] Error:', e.message);
-            return res.status(500).json({ error: `Error de conexión con Supabase (${SUPABASE_URL}): ${e.message}` });
+            return res.status(500).json({ error: `Error al conectar con Supabase: ${e.message}` });
         }
     }
 
@@ -69,7 +76,7 @@ module.exports = async (req, res) => {
             toneObjects: Array.isArray(item.toneObjects) ? item.toneObjects : []
         };
         try {
-            const fetchRes = await fetch(`${SUPABASE_URL}/rest/v1/productos`, {
+            const fetchRes = await fetch(getSupabaseUrl('/productos'), {
                 method: 'POST',
                 headers: getHeaders('return=representation'),
                 body: JSON.stringify(payload)
@@ -82,7 +89,7 @@ module.exports = async (req, res) => {
             return res.status(fetchRes.status).json({ error: errText });
         } catch (e) {
             console.error('[KARA API POST] Error:', e.message);
-            return res.status(500).json({ error: `No se pudo conectar a la URL de Supabase (${SUPABASE_URL}). Revisa la variable SUPABASE_URL en Vercel.` });
+            return res.status(500).json({ error: `No se pudo conectar a Supabase: ${e.message}` });
         }
     }
 
