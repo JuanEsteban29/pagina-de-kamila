@@ -51,13 +51,27 @@ module.exports = async (req, res) => {
             });
             if (fetchRes.ok) {
                 const rows = await fetchRes.json();
-                return res.status(200).json(parseRows(rows));
+                const parsed = parseRows(rows);
+                if (parsed.length > 0) {
+                    return res.status(200).json(parsed);
+                }
             }
-            return res.status(fetchRes.status).json([]);
         } catch (e) {
             console.error('[KARA API GET] Error:', e.message);
-            return res.status(500).json({ error: `Error al conectar con Supabase: ${e.message}` });
         }
+
+        // Fallback local en disco si Supabase está vacío o no responde
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            const jsonPath = path.join(process.cwd(), 'js', 'productos.json');
+            if (fs.existsSync(jsonPath)) {
+                const fallbackData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+                return res.status(200).json(fallbackData);
+            }
+        } catch(e) {}
+
+        return res.status(200).json([]);
     }
 
     if (req.method === 'POST') {

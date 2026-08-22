@@ -209,12 +209,17 @@ async function cargarProductosDB() {
             res = await fetch("js/productos.json?v=" + Date.now());
         }
         if (res.ok) {
-            dbProductos = await res.json();
+            const data = await res.json();
+            dbProductos = Array.isArray(data) && data.length > 0 ? data : [...dbProductosFallback];
         } else {
-            throw new Error("No se pudo cargar el catálogo desde Supabase ni desde el respaldo local.");
+            dbProductos = [...dbProductosFallback];
         }
     } catch (e) {
         console.warn("[KARA] Servidor o Supabase no disponible. Usando catálogo base de respaldo:", e);
+        dbProductos = [...dbProductosFallback];
+    }
+
+    if (!Array.isArray(dbProductos) || dbProductos.length === 0) {
         dbProductos = [...dbProductosFallback];
     }
 }
