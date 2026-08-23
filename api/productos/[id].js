@@ -59,8 +59,8 @@ module.exports = async (req, res) => {
         const payload = {
             title: body.title,
             price: parseFloat(body.price) || 0,
-            category: body.category,
-            img: body.img,
+            category: body.category || 'labios',
+            img: body.img || '',
             images: Array.isArray(body.images) ? body.images : [],
             stock: parseInt(body.stock) || 0,
             badge: body.badge || '',
@@ -68,20 +68,36 @@ module.exports = async (req, res) => {
             toneObjects: Array.isArray(body.toneObjects) ? body.toneObjects : [],
             updated_at: new Date().toISOString()
         };
+
         try {
-            const targetUrl = getSupabaseUrl(`/productos?id=eq.${numId}`);
-            const fetchRes = await fetch(targetUrl, {
+            // Intento 1: Actualizar fila existente id=eq.numId
+            let targetUrl = getSupabaseUrl(`/productos?id=eq.${numId}`);
+            let fetchRes = await fetch(targetUrl, {
                 method: 'PATCH',
                 headers: getHeaders('return=representation'),
                 body: JSON.stringify(payload)
             });
+
+            let rows = [];
             if (fetchRes.ok) {
-                const rows = await fetchRes.json();
-                const prod = parseRows(rows)[0] || { ...payload, id: numId };
-                return res.status(200).json({ success: true, product: prod });
+                rows = await fetchRes.json();
             }
-            const errText = await fetchRes.text();
-            return res.status(fetchRes.status).json({ error: errText });
+
+            // Intento 2: Si el producto no existía previamente en Supabase, realizar UPSERT/POST guardándolo con su ID
+            if (!Array.isArray(rows) || rows.length === 0) {
+                const payloadConId = { ...payload, id: numId };
+                fetchRes = await fetch(getSupabaseUrl('/productos'), {
+                    method: 'POST',
+                    headers: getHeaders('resolution=merge-duplicates,return=representation'),
+                    body: JSON.stringify(payloadConId)
+                });
+                if (fetchRes.ok) {
+                    rows = await fetchRes.json();
+                }
+            }
+
+            const prod = (Array.isArray(rows) && rows.length > 0) ? parseRows(rows)[0] : { ...payload, id: numId };
+            return res.status(200).json({ success: true, product: prod });
         } catch (e) {
             console.error('[KARA API PUT] Error:', e.message);
             return res.status(500).json({ error: `No se pudo conectar a Supabase: ${e.message}` });

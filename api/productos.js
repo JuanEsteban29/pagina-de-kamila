@@ -1,3 +1,6 @@
+const fs = require('fs');
+const path = require('path');
+
 function getSupabaseUrl(path = '') {
     let baseUrl = (process.env.SUPABASE_URL || 'https://vxswjaixnlfwgtqrwcf.supabase.co').trim().replace(/\/+$/, '');
     if (baseUrl.endsWith('/rest/v1')) {
@@ -36,6 +39,16 @@ function parseRows(rows) {
     }));
 }
 
+function obtenerProductosBaseDisco() {
+    try {
+        const jsonPath = path.join(process.cwd(), 'js', 'productos.json');
+        if (fs.existsSync(jsonPath)) {
+            return JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
+        }
+    } catch(e) {}
+    return [];
+}
+
 module.exports = async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -43,35 +56,39 @@ module.exports = async (req, res) => {
     if (req.method === 'OPTIONS') return res.status(200).end();
 
     if (req.method === 'GET') {
-        if (!SUPABASE_KEY) return res.status(200).json([]);
-        try {
-            const fetchRes = await fetch(getSupabaseUrl('/productos?select=*&order=id.desc'), {
-                headers: getHeaders(),
-                cache: 'no-store'
-            });
-            if (fetchRes.ok) {
-                const rows = await fetchRes.json();
-                const parsed = parseRows(rows);
-                if (parsed.length > 0) {
-                    return res.status(200).json(parsed);
+        const baseItems = obtenerProductosBaseDisco();
+        let supaItems = [];
+
+        if (SUPABASE_KEY) {
+            try {
+                const fetchRes = await fetch(getSupabaseUrl('/productos?select=*&order=id.desc'), {
+                    headers: getHeaders(),
+                    cache: 'no-store'
+                });
+                if (fetchRes.ok) {
+                    const rows = await fetchRes.json();
+                    supaItems = parseRows(rows);
                 }
+            } catch (e) {
+                console.error('[KARA API GET] Error:', e.message);
             }
-        } catch (e) {
-            console.error('[KARA API GET] Error:', e.message);
         }
 
-        // Fallback local en disco si Supabase está vacío o no responde
-        try {
-            const fs = require('fs');
-            const path = require('path');
-            const jsonPath = path.join(process.cwd(), 'js', 'productos.json');
-            if (fs.existsSync(jsonPath)) {
-                const fallbackData = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-                return res.status(200).json(fallbackData);
+        // Combinar catálogo: los elementos guardados en Supabase sobrescriben a los base
+        const catalogMap = new Map();
+        for (const baseItem of baseItems) {
+            if (baseItem && baseItem.id) {
+                catalogMap.set(Number(baseItem.id), baseItem);
             }
-        } catch(e) {}
+        }
+        for (const supaItem of supaItems) {
+            if (supaItem && supaItem.id) {
+                catalogMap.set(Number(supaItem.id), supaItem);
+            }
+        }
 
-        return res.status(200).json([]);
+        const listaFinal = Array.from(catalogMap.values());
+        return res.status(200).json(listaFinal);
     }
 
     if (req.method === 'POST') {
