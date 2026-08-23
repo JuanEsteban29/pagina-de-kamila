@@ -74,20 +74,17 @@ module.exports = async (req, res) => {
             }
         }
 
-        // Combinar catálogo: los elementos guardados en Supabase sobrescriben a los base
-        const catalogMap = new Map();
-        for (const baseItem of baseItems) {
-            if (baseItem && baseItem.id) {
-                catalogMap.set(Number(baseItem.id), baseItem);
-            }
-        }
+        // Combinar catálogo: los productos guardados/creados en Supabase van PRIMERO
+        const supaMap = new Map();
         for (const supaItem of supaItems) {
             if (supaItem && supaItem.id) {
-                catalogMap.set(Number(supaItem.id), supaItem);
+                supaMap.set(Number(supaItem.id), supaItem);
             }
         }
 
-        const listaFinal = Array.from(catalogMap.values());
+        const remainingBase = baseItems.filter(b => b && b.id && !supaMap.has(Number(b.id)));
+        const listaFinal = [...Array.from(supaMap.values()), ...remainingBase];
+
         return res.status(200).json(listaFinal);
     }
 
