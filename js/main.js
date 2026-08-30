@@ -228,7 +228,7 @@ async function cargarProductosDB() {
 // Estado global
 let carrito    = JSON.parse(localStorage.getItem('KARA_CART')) || [];
 let favoritos  = JSON.parse(localStorage.getItem('KARA_FAVS')) || [];
-let productosVisibles = 4;
+let productosVisibles = 12;
 const META_ENVIO_GRATIS = 15.00;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -281,6 +281,9 @@ function renderProductos(filtrados = null) {
         const card  = document.createElement("div");
         card.className = "product-card";
         card.style.setProperty('--card-index', i);
+        card.style.opacity = "1";
+        card.style.visibility = "visible";
+        card.style.transform = "none";
 
         // Renderizado de Tonos con Colores Reales
         let htmlTonos = '';
@@ -1189,20 +1192,23 @@ function initGSAP() {
 }
 
 function animateProductCards() {
-    if (typeof gsap === "undefined" || typeof ScrollTrigger === "undefined") return; //[cite: 6]
-    gsap.utils.toArray(".product-card").forEach((card, i) => {
-        ScrollTrigger.getAll().filter(st => st.trigger === card).forEach(st => st.kill()); //[cite: 6]
-        gsap.to(card, {
+    const cards = document.querySelectorAll(".product-card");
+    cards.forEach(card => {
+        card.style.opacity = "1";
+        card.style.visibility = "visible";
+    });
+
+    if (typeof gsap === "undefined") return;
+    try {
+        gsap.to(".product-card", {
             opacity: 1,
             y: 0,
-            duration: 0.7,
-            ease: "power3.out",
-            delay: (i % 4) * 0.1,
-            scrollTrigger: {
-                trigger: card,
-                start: "top 92%",
-                toggleActions: "play none none none",
-            }
-        }); //[cite: 6]
-    });
+            duration: 0.4,
+            stagger: 0.04,
+            ease: "power2.out"
+        });
+        if (typeof ScrollTrigger !== "undefined") {
+            ScrollTrigger.refresh();
+        }
+    } catch(e) {}
 }
