@@ -861,8 +861,8 @@ img {
     overflow: hidden; 
     display: flex; 
     flex-direction: column; 
-    opacity: 0; 
-    transform: translateY(30px);
+    opacity: 1 !important; 
+    transform: none !important;
     box-shadow: none !important;
     border-bottom: 1px solid #EAEAEA !important;
     transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;

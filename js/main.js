@@ -228,7 +228,7 @@ async function cargarProductosDB() {
 // Estado global
 let carrito    = JSON.parse(localStorage.getItem('KARA_CART')) || [];
 let favoritos  = JSON.parse(localStorage.getItem('KARA_FAVS')) || [];
-let productosVisibles = 12;
+let productosVisibles = 9999;
 const META_ENVIO_GRATIS = 15.00;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -269,6 +269,15 @@ function renderProductos(filtrados = null) {
 
     grid.innerHTML = "";
     const lista = filtrados || dbProductos.slice(0, productosVisibles);
+
+    const loadMoreBtn = document.getElementById("loadMoreBtn");
+    if (loadMoreBtn) {
+        if (lista.length >= dbProductos.length) {
+            loadMoreBtn.style.display = "none";
+        } else {
+            loadMoreBtn.style.display = "inline-flex";
+        }
+    }
 
     if (lista.length === 0) {
         grid.innerHTML = `<p style="grid-column:1/-1;text-align:center;padding:2rem;color:var(--text-muted);">
