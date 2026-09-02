@@ -558,14 +558,14 @@ function setupCoreEventListeners() {
                 alert("Tu carrito playero está vacío."); //[cite: 6]
                 return; //[cite: 6]
             }
-            let msg = "¡Hola KARA! 🩷 Quiero proceder con la compra de mi pedido:\n\n";
+            let msg = "¡Hola KARA! \uD83E\uDE77 Quiero proceder con la compra de mi pedido:\n\n";
             let total = 0;
             carrito.forEach(item => {
                 const detTono = item.selectedTone ? ` (Tono: ${item.selectedTone})` : "";
                 msg += `• ${item.title}${detTono} (x${item.cantidad}) - $${(item.price * item.cantidad).toFixed(2)}\n`;
                 total += item.price * item.cantidad;
             });
-            if (total >= META_ENVIO_GRATIS) msg += `\n¡Envío Gratis Garantizado! 🩷`;
+            if (total >= META_ENVIO_GRATIS) msg += `\n¡Envío Gratis Garantizado! \uD83E\uDE77`;
             msg += `\nTotal Neto: $${total.toFixed(2)}`;
             window.open("https://wa.me/584122665492?text=" + encodeURIComponent(msg), "_blank");
         });
@@ -1005,14 +1005,14 @@ document.addEventListener("click", (e) => {
             alert("Tu carrito playero está vacío.");
             return;
         }
-        let msg = "¡Hola KARA! 🩷 Quiero proceder con la compra de mi pedido:\n\n";
+        let msg = "¡Hola KARA! \uD83E\uDE77 Quiero proceder con la compra de mi pedido:\n\n";
         let total = 0;
         carrito.forEach(item => {
             const detTono = item.selectedTone ? ` (Tono: ${item.selectedTone})` : "";
             msg += `• ${item.title}${detTono} (x${item.cantidad}) - $${(item.price * item.cantidad).toFixed(2)}\n`;
             total += item.price * item.cantidad;
         });
-        if (total >= META_ENVIO_GRATIS) msg += `\n¡Envío Gratis Garantizado! 🩷`;
+        if (total >= META_ENVIO_GRATIS) msg += `\n¡Envío Gratis Garantizado! \uD83E\uDE77`;
         msg += `\nTotal Neto: $${total.toFixed(2)}`;
         window.open("https://wa.me/584122665492?text=" + encodeURIComponent(msg), "_blank");
         return;
@@ -1023,7 +1023,7 @@ document.addEventListener("click", (e) => {
     if (waBtn) {
         e.preventDefault();
         e.stopPropagation();
-        window.open("https://wa.me/584122665492?text=" + encodeURIComponent("¡Hola KARA! 🩷 Quisiera más información sobre los productos."), "_blank");
+        window.open("https://wa.me/584122665492?text=" + encodeURIComponent("¡Hola KARA! \uD83E\uDE77 Quisiera más información sobre los productos."), "_blank");
         return;
     }
 });
