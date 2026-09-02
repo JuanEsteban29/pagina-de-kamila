@@ -899,10 +899,11 @@ img {
 }
 
 .product-info { 
-    padding: 1.5rem 0.5rem 1rem 0.5rem !important; 
-    display: flex; 
-    flex-direction: column; 
-    flex-grow: 1; 
+    padding: 1.5rem 0.8rem 1.2rem 0.8rem !important; 
+    display: flex !important; 
+    flex-direction: column !important; 
+    flex: 1 1 auto !important; 
+    justify-content: space-between !important;
     text-align: center !important;
 }
 
@@ -920,8 +921,13 @@ img {
     font-size: 0.95rem !important; 
     font-weight: 500 !important; 
     margin-bottom: 0.5rem !important; 
-    min-height: auto !important; 
-    line-height: 1.4; 
+    min-height: 2.8rem !important; 
+    max-height: 2.8rem !important; 
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    line-height: 1.4 !important; 
     color: var(--text-main); 
     letter-spacing: 0.5px !important;
 }
@@ -931,13 +937,25 @@ img {
     font-size: 1.25rem !important; 
     font-weight: 600 !important; 
     color: #000000 !important; 
-    margin-bottom: 1.2rem !important; 
+    margin-bottom: 0.8rem !important; 
+}
+
+.product-tones {
+    min-height: 32px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-bottom: 0.5rem !important;
 }
 
 .btn-huda-primary {
     background-color: #000000 !important; 
     color: white !important; 
-    padding: 1rem 1.5rem !important; 
+    height: 46px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 1.2rem !important; 
     border-radius: 0px !important;
     font-weight: 700 !important; 
     text-transform: uppercase !important; 
@@ -946,6 +964,7 @@ img {
     letter-spacing: 2px !important; 
     border: 1px solid #000000 !important; 
     transition: all 0.3s ease !important;
+    margin-top: auto !important;
 }
 
 .btn-huda-primary:hover {

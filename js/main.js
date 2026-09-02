@@ -448,14 +448,14 @@ function setupCoreEventListeners() {
             const btnFav = e.target.closest(".fav-card-btn"); //[cite: 6]
 
             if (btnAdd) {
-                const id = parseInt(btnAdd.dataset.id); //[cite: 6]
-                agregarAlCarrito(id); //[cite: 6]
-                btnAdd.textContent = "Añadido ✓"; //[cite: 6]
-                btnAdd.style.backgroundColor = "#25D366"; //[cite: 6]
+                const id = btnAdd.dataset.id;
+                agregarAlCarrito(id);
+                btnAdd.textContent = "AÑADIDO ✓";
+                btnAdd.style.backgroundColor = "#25D366";
                 setTimeout(() => {
-                    btnAdd.textContent = "Añadir a la bolsa"; //[cite: 6]
-                    btnAdd.style.backgroundColor = "#1c1c1c"; //[cite: 6]
-                }, 1200); //[cite: 6]
+                    btnAdd.textContent = "AÑADIR A LA CESTA";
+                    btnAdd.style.backgroundColor = "#000000";
+                }, 1200);
             }
 
             if (btnFav) {
@@ -792,7 +792,7 @@ function confirmarAgregarConTono(prod, tono) {
 }
 
 function agregarAlCarrito(id) {
-    const prod = dbProductos.find(p => p.id === id);
+    const prod = dbProductos.find(p => String(p.id) === String(id));
     if (!prod) return;
     
     if (typeof prod.stock === "number" && prod.stock <= 0) {
@@ -804,7 +804,7 @@ function agregarAlCarrito(id) {
     let toneList = [];
     if (prod.toneObjects && Array.isArray(prod.toneObjects) && prod.toneObjects.length > 0) {
         toneList = prod.toneObjects;
-    } else if (prod.tones && prod.tones.trim().length > 0) {
+    } else if (prod.tones && typeof prod.tones === 'string' && prod.tones.trim().length > 0) {
         toneList = prod.tones.split(",").map(t => t.trim()).filter(Boolean);
     }
 
