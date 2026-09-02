@@ -361,6 +361,31 @@ function renderProductos(filtrados = null) {
                 </button>
             </div>
         `;
+        // Evento directo para "Añadir a la cesta"
+        const btnAdd = card.querySelector(".btn-add-cart");
+        if (btnAdd && !isAgotado) {
+            btnAdd.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                agregarAlCarrito(prod.id);
+                btnAdd.textContent = "AÑADIDO ✓";
+                btnAdd.style.backgroundColor = "#25D366";
+                setTimeout(() => {
+                    btnAdd.textContent = "AÑADIR A LA CESTA";
+                    btnAdd.style.backgroundColor = "#000000";
+                }, 1200);
+            });
+        }
+
+        // Evento directo para "Favorito"
+        const btnFav = card.querySelector(".fav-card-btn");
+        if (btnFav) {
+            btnFav.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleFavorito(prod.id, btnFav);
+            });
+        }
 
         // Eventos para swatches de tonos
         const toneDots = card.querySelectorAll(".tone-dot");
@@ -816,18 +841,25 @@ function agregarAlCarrito(id) {
 }
 
 function toggleFavorito(id, element) {
-    const index = favoritos.indexOf(id); //[cite: 6]
+    const idStr = String(id);
+    const index = favoritos.findIndex(f => String(f) === idStr);
     if (index > -1) {
-        favoritos.splice(index, 1); //[cite: 6]
-        element.classList.remove("active"); //[cite: 6]
-        element.querySelector("svg").setAttribute("fill", "none"); //[cite: 6]
+        favoritos.splice(index, 1);
+        if (element) {
+            element.classList.remove("active");
+            const svg = element.querySelector("svg");
+            if (svg) svg.setAttribute("fill", "none");
+        }
     } else {
-        favoritos.push(id); //[cite: 6]
-        element.classList.add("active"); //[cite: 6]
-        element.querySelector("svg").setAttribute("fill", "currentColor"); //[cite: 6]
+        favoritos.push(id);
+        if (element) {
+            element.classList.add("active");
+            const svg = element.querySelector("svg");
+            if (svg) svg.setAttribute("fill", "currentColor");
+        }
     }
-    localStorage.setItem('KARA_FAVS', JSON.stringify(favoritos)); //[cite: 6]
-    actualizarInsignias(); //[cite: 6]
+    localStorage.setItem('KARA_FAVS', JSON.stringify(favoritos));
+    actualizarInsignias();
 }
 
 // ==========================================
