@@ -576,19 +576,28 @@ function setupCoreEventListeners() {
 // 4. PANEL LATERAL DEL CARRITO
 // ==========================================
 function setupCartPanelEvents() {
-    const cartToggle = document.getElementById("cartToggle"); //[cite: 6]
-    const cartModal  = document.getElementById("cartModal"); //[cite: 6]
-    const closeCart  = document.getElementById("closeCart"); //[cite: 6]
+    const cartToggle = document.getElementById("cartToggle");
+    const cartModal  = document.getElementById("cartModal");
+    const closeCart  = document.getElementById("closeCart");
 
-    if (cartToggle && cartModal && closeCart) {
+    if (cartToggle && cartModal) {
         cartToggle.addEventListener("click", (e) => {
-            e.preventDefault(); //[cite: 6]
-            cartModal.classList.add("open-panel"); //[cite: 6]
-            actualizarVistaCarrito(); //[cite: 6]
+            e.preventDefault();
+            abrirModal(cartModal, actualizarVistaCarrito);
         });
-        closeCart.addEventListener("click", () => cartModal.classList.remove("open-panel")); //[cite: 6]
+    }
+
+    if (closeCart && cartModal) {
+        closeCart.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            cerrarModal(cartModal);
+        });
+    }
+
+    if (cartModal) {
         cartModal.addEventListener("click", (e) => {
-            if (e.target === cartModal) cartModal.classList.remove("open-panel"); //[cite: 6]
+            if (e.target === cartModal) cerrarModal(cartModal);
         });
     }
 }
@@ -872,20 +881,72 @@ function actualizarInsignias() {
     if (favsCount) favsCount.textContent = favoritos.length; //[cite: 6]
 }
 
+function cerrarModal(modal) {
+    if (!modal) return;
+    modal.style.display = "none";
+    modal.classList.remove("open-panel", "active", "open");
+}
+
+function abrirModal(modal, callbackOpen = null) {
+    if (!modal) return;
+    modal.style.display = "flex";
+    modal.classList.add("active");
+    if (modal.id === "cartModal") {
+        modal.classList.add("open-panel");
+    }
+    if (callbackOpen) callbackOpen();
+}
+
 function setupModalEvents(triggerId, modalId, closeId, callbackOpen = null) {
-    const trigger = document.getElementById(triggerId); //[cite: 6]
-    const modal   = document.getElementById(modalId); //[cite: 6]
-    const close   = document.getElementById(closeId); //[cite: 6]
-    if (trigger && modal && close) {
-        trigger.addEventListener("click", (e) => {
-            e.preventDefault(); //[cite: 6]
-            modal.style.display = "flex"; //[cite: 6]
-            if (callbackOpen) callbackOpen(); //[cite: 6]
+    const trigger = document.getElementById(triggerId);
+    const modal   = document.getElementById(modalId);
+    const close   = document.getElementById(closeId);
+
+    if (close && modal) {
+        close.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            cerrarModal(modal);
         });
-        close.addEventListener("click",   () => modal.style.display = "none"); //[cite: 6]
-        modal.addEventListener("click", (e) => { if (e.target === modal) modal.style.display = "none"; }); //[cite: 6]
+    }
+
+    if (modal) {
+        modal.addEventListener("click", (e) => {
+            if (e.target === modal) {
+                cerrarModal(modal);
+            }
+        });
+    }
+
+    if (trigger && modal) {
+        trigger.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            abrirModal(modal, callbackOpen);
+        });
     }
 }
+
+// Escuchador global para cualquier botón de cierre X o backdrop o tecla Escape
+document.addEventListener("click", (e) => {
+    const closeBtn = e.target.closest(".modal-close, #closeCart, #closeFavs, #closeToneModal, #closeServices, #closeQuiz");
+    if (closeBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const parentModal = closeBtn.closest(".modal-overlay, .cart-panel, .modal") || document.getElementById(closeBtn.id.replace('close', '').toLowerCase() + 'Modal');
+        if (parentModal) {
+            cerrarModal(parentModal);
+        } else {
+            document.querySelectorAll(".modal-overlay, .cart-panel, .modal").forEach(m => cerrarModal(m));
+        }
+    }
+});
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+        document.querySelectorAll(".modal-overlay, .cart-panel, .modal").forEach(m => cerrarModal(m));
+    }
+});
 
 function actualizarVistaCarrito() {
     const body = document.getElementById("cartModalBody"); //[cite: 6]
