@@ -927,8 +927,9 @@ function setupModalEvents(triggerId, modalId, closeId, callbackOpen = null) {
     }
 }
 
-// Escuchador global para cualquier botón de cierre X o backdrop o tecla Escape
+// Escuchador global para todos los elementos interactivos (Cierre X, Carrito, Favoritos, Tarjetas de Categoría, Buscador, Tecla Escape)
 document.addEventListener("click", (e) => {
+    // 1. Botón de cierre X
     const closeBtn = e.target.closest(".modal-close, #closeCart, #closeFavs, #closeToneModal, #closeServices, #closeQuiz");
     if (closeBtn) {
         e.preventDefault();
@@ -939,6 +940,60 @@ document.addEventListener("click", (e) => {
         } else {
             document.querySelectorAll(".modal-overlay, .cart-panel, .modal").forEach(m => cerrarModal(m));
         }
+        return;
+    }
+
+    // 2. Botón de Carrito en Cabecera (#cartToggle)
+    const cartToggle = e.target.closest("#cartToggle");
+    if (cartToggle) {
+        e.preventDefault();
+        e.stopPropagation();
+        const cartModal = document.getElementById("cartModal");
+        if (cartModal) abrirModal(cartModal, actualizarVistaCarrito);
+        return;
+    }
+
+    // 3. Botón de Favoritos en Cabecera (#favsToggle)
+    const favsToggle = e.target.closest("#favsToggle");
+    if (favsToggle) {
+        e.preventDefault();
+        e.stopPropagation();
+        const favsModal = document.getElementById("favsModal");
+        if (favsModal) abrirModal(favsModal, actualizarVistaFavoritos);
+        return;
+    }
+
+    // 4. Tarjetas de Categoría (.category-card)
+    const categoryCard = e.target.closest(".category-card");
+    if (categoryCard) {
+        e.preventDefault();
+        e.stopPropagation();
+        const cat = categoryCard.dataset.category;
+        if (!cat) return;
+
+        if (cat.toLowerCase() === "maquillaje" || cat.toLowerCase() === "servicios") {
+            const servicesModal = document.getElementById("servicesModal");
+            if (servicesModal) abrirModal(servicesModal);
+            return;
+        }
+
+        const filtrados = dbProductos.filter(p =>
+            p.category && String(p.category).toLowerCase().trim() === cat.toLowerCase().trim()
+        );
+        renderProductos(filtrados);
+        const section = document.getElementById("productos");
+        if (section) section.scrollIntoView({ behavior: "smooth" });
+        return;
+    }
+
+    // 5. Botón Flotante Quiz (#quizFloatingBtn)
+    const quizBtn = e.target.closest("#quizFloatingBtn");
+    if (quizBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        const quizModal = document.getElementById("quizModal");
+        if (quizModal) abrirModal(quizModal, lanzarEncuestaDinamica);
+        return;
     }
 });
 
