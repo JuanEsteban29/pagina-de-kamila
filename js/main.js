@@ -286,7 +286,7 @@ function renderProductos(filtrados = null) {
     }
 
     lista.forEach((prod, i) => {
-        const isFav = favoritos.includes(prod.id);
+        const isFav = favoritos.some(f => String(f) === String(prod.id));
         const card  = document.createElement("div");
         card.className = "product-card";
         card.style.setProperty('--card-index', i);
@@ -984,7 +984,7 @@ function actualizarVistaFavoritos() {
     const body = document.getElementById("favsModalBody"); //[cite: 6]
     if (!body) return; //[cite: 6]
     body.innerHTML = ""; //[cite: 6]
-    const listaFavs = dbProductos.filter(p => favoritos.includes(p.id)); //[cite: 6]
+    const listaFavs = dbProductos.filter(p => favoritos.some(f => String(f) === String(p.id)));
     if (listaFavs.length === 0) {
         body.innerHTML = `<p style="text-align:center;padding:1rem;color:rgba(255,255,255,0.9);">No tienes productos guardados.</p>`; //[cite: 6]
         return; //[cite: 6]
