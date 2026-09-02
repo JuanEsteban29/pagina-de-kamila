@@ -995,6 +995,37 @@ document.addEventListener("click", (e) => {
         if (quizModal) abrirModal(quizModal, lanzarEncuestaDinamica);
         return;
     }
+
+    // 6. Botón de Checkout WhatsApp en Carrito (#checkoutBtn)
+    const checkoutBtn = e.target.closest("#checkoutBtn, .btn-checkout");
+    if (checkoutBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (carrito.length === 0) {
+            alert("Tu carrito playero está vacío.");
+            return;
+        }
+        let msg = "¡Hola KARA! 🌴 Quiero proceder con la compra de mi pedido:\n\n";
+        let total = 0;
+        carrito.forEach(item => {
+            const detTono = item.selectedTone ? ` (Tono: ${item.selectedTone})` : "";
+            msg += `• ${item.title}${detTono} (x${item.cantidad}) - $${(item.price * item.cantidad).toFixed(2)}\n`;
+            total += item.price * item.cantidad;
+        });
+        if (total >= META_ENVIO_GRATIS) msg += `\n¡Envío Gratis Garantizado! 🥥`;
+        msg += `\nTotal Neto: $${total.toFixed(2)}`;
+        window.open("https://wa.me/584122665492?text=" + encodeURIComponent(msg), "_blank");
+        return;
+    }
+
+    // 7. Botón Flotante WhatsApp (#whatsappBtn / .whatsapp-floating)
+    const waBtn = e.target.closest("#whatsappBtn, .whatsapp-floating, .whatsapp-btn");
+    if (waBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        window.open("https://wa.me/584122665492?text=" + encodeURIComponent("¡Hola KARA! 🌴 Quisiera más información sobre los productos."), "_blank");
+        return;
+    }
 });
 
 document.addEventListener("keydown", (e) => {
