@@ -578,7 +578,7 @@ function enviarPedidoWhatsApp() {
     }
     msg += `\nTotal Neto: $${total.toFixed(2)}`;
 
-    const url = "https://api.whatsapp.com/send?phone=584122665492&text=" + encodeURIComponent(msg);
+    const url = "https://api.whatsapp.com/send?phone=584127144626&text=" + encodeURIComponent(msg);
     window.open(url, "_blank");
 }
 
@@ -684,7 +684,7 @@ function setupServicesDropdown() {
     if (btnSend) {
         btnSend.addEventListener("click", () => {
             if (!selectedOccasion || !selectedLook || !preview) return;
-            window.open("https://wa.me/584122665492?text=" + encodeURIComponent(preview.textContent), "_blank");
+            window.open("https://api.whatsapp.com/send?phone=584127144626&text=" + encodeURIComponent(preview.textContent), "_blank");
             if (servicesModal) servicesModal.style.display = "none";
         });
     }
@@ -697,7 +697,7 @@ function setupServicesDropdown() {
             const contenidoOriginal = btnAgendar.innerHTML;
             btnAgendar.innerHTML = "<span>💬</span> Abriendo WhatsApp...";
             btnAgendar.style.color = "#25D366";
-            window.open("https://wa.me/584122665492?text=" + encodeURIComponent(msg), "_blank");
+            window.open("https://api.whatsapp.com/send?phone=584127144626&text=" + encodeURIComponent(msg), "_blank");
             setTimeout(() => {
                 btnAgendar.innerHTML = contenidoOriginal;
                 btnAgendar.style.color = "";
@@ -1020,7 +1020,7 @@ document.addEventListener("click", (e) => {
     if (waBtn) {
         e.preventDefault();
         e.stopPropagation();
-        const url = "https://api.whatsapp.com/send?phone=584122665492&text=" + encodeURIComponent("¡Hola KARA! \uD83D\uDC95 Quisiera más información sobre los productos.");
+        const url = "https://api.whatsapp.com/send?phone=584127144626&text=" + encodeURIComponent("¡Hola KARA! \uD83D\uDC95 Quisiera más información sobre los productos.");
         window.open(url, "_blank");
         return;
     }
