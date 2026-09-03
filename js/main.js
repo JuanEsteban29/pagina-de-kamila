@@ -550,26 +550,36 @@ function setupCoreEventListeners() {
         });
     });
 
-    // WhatsApp checkout[cite: 6]
-    const checkoutBtn = document.getElementById("checkoutBtn"); //[cite: 6]
+    // WhatsApp checkout
+    const checkoutBtn = document.getElementById("checkoutBtn");
     if (checkoutBtn) {
-        checkoutBtn.addEventListener("click", () => {
-            if (carrito.length === 0) {
-                alert("Tu carrito playero está vacío."); //[cite: 6]
-                return; //[cite: 6]
-            }
-            let msg = "¡Hola KARA! \uD83D\uDC95 Quiero proceder con la compra de mi pedido:\n\n";
-            let total = 0;
-            carrito.forEach(item => {
-                const detTono = item.selectedTone ? ` (Tono: ${item.selectedTone})` : "";
-                msg += `• ${item.title}${detTono} (x${item.cantidad}) - $${(item.price * item.cantidad).toFixed(2)}\n`;
-                total += item.price * item.cantidad;
-            });
-            if (total >= META_ENVIO_GRATIS) msg += `\n¡Envío Gratis Garantizado! \uD83D\uDC95`;
-            msg += `\nTotal Neto: $${total.toFixed(2)}`;
-            window.open("https://wa.me/584122665492?text=" + encodeURIComponent(msg), "_blank");
+        checkoutBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            enviarPedidoWhatsApp();
         });
     }
+}
+
+function enviarPedidoWhatsApp() {
+    if (!carrito || carrito.length === 0) {
+        alert("Tu carrito playero está vacío.");
+        return;
+    }
+    let msg = "¡Hola KARA! \uD83D\uDC95 Quiero proceder con la compra de mi pedido:\n\n";
+    let total = 0;
+    carrito.forEach(item => {
+        const detTono = item.selectedTone ? ` (Tono: ${item.selectedTone})` : "";
+        msg += `• ${item.title}${detTono} (x${item.cantidad}) - $${(item.price * item.cantidad).toFixed(2)}\n`;
+        total += item.price * item.cantidad;
+    });
+    if (total >= META_ENVIO_GRATIS) {
+        msg += `\n¡Envío Gratis Garantizado! \uD83D\uDC95`;
+    }
+    msg += `\nTotal Neto: $${total.toFixed(2)}`;
+
+    const url = "https://api.whatsapp.com/send?phone=584122665492&text=" + encodeURIComponent(msg);
+    window.open(url, "_blank");
 }
 
 // ==========================================
@@ -1001,20 +1011,7 @@ document.addEventListener("click", (e) => {
     if (checkoutBtn) {
         e.preventDefault();
         e.stopPropagation();
-        if (carrito.length === 0) {
-            alert("Tu carrito playero está vacío.");
-            return;
-        }
-        let msg = "¡Hola KARA! \uD83D\uDC95 Quiero proceder con la compra de mi pedido:\n\n";
-        let total = 0;
-        carrito.forEach(item => {
-            const detTono = item.selectedTone ? ` (Tono: ${item.selectedTone})` : "";
-            msg += `• ${item.title}${detTono} (x${item.cantidad}) - $${(item.price * item.cantidad).toFixed(2)}\n`;
-            total += item.price * item.cantidad;
-        });
-        if (total >= META_ENVIO_GRATIS) msg += `\n¡Envío Gratis Garantizado! \uD83D\uDC95`;
-        msg += `\nTotal Neto: $${total.toFixed(2)}`;
-        window.open("https://wa.me/584122665492?text=" + encodeURIComponent(msg), "_blank");
+        enviarPedidoWhatsApp();
         return;
     }
 
@@ -1023,7 +1020,8 @@ document.addEventListener("click", (e) => {
     if (waBtn) {
         e.preventDefault();
         e.stopPropagation();
-        window.open("https://wa.me/584122665492?text=" + encodeURIComponent("¡Hola KARA! \uD83D\uDC95 Quisiera más información sobre los productos."), "_blank");
+        const url = "https://api.whatsapp.com/send?phone=584122665492&text=" + encodeURIComponent("¡Hola KARA! \uD83D\uDC95 Quisiera más información sobre los productos.");
+        window.open(url, "_blank");
         return;
     }
 });
